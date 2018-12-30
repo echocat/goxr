@@ -8,11 +8,26 @@ import (
 	"github.com/vmihailenco/msgpack"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 func OpenBox(filename string) (box *Box, rErr error) {
-	if f, err := os.OpenFile(filename, os.O_RDONLY, 0); err != nil {
+	parts := strings.SplitN(filename, "=", 2)
+	prefix := ""
+	if len(parts) > 1 {
+		prefix = entry.CleanPath(filepath.ToSlash(parts[0]))
+		if prefix != "" {
+			prefix += "/"
+		}
+		filename = parts[1]
+	}
+
+	if fi, err := os.Stat(filename); err != nil {
+		return nil, common.NewPathError("openBox", filename, err)
+	} else if fi.IsDir() {
+		return nil, common.NewPathError("openBox", filename, common.ErrDoesNotContainBox)
+	} else if f, err := os.OpenFile(filename, os.O_RDONLY, 0); err != nil {
 		return nil, common.NewPathError("openBox", filename, err)
 	} else {
 		success := false
@@ -47,6 +62,7 @@ func OpenBox(filename string) (box *Box, rErr error) {
 			}
 			box.OnClose = reader.close
 			box.EntryToFileTransformer = ToFileTransformerFor(reader.newEntryReader)
+			box.Prefix = prefix
 			success = true
 			return reader.box, nil
 		}

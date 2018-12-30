@@ -11,13 +11,11 @@ import (
 	"github.com/blaubaer/goxr/server/configuration"
 	"github.com/urfave/cli"
 	"os"
-	"strings"
 )
 
 var (
 	srv         = &server.Server{}
-	config      *configuration.Configuration
-	httpAddress = ":8080"
+	httpAddress = &fixedString{def: ":8080"}
 	logLevel    = &fixedLogLevel{}
 )
 
@@ -35,7 +33,7 @@ func init() {
 		fail(127, err)
 	} else {
 		srv.Box = b
-		config = &c
+		srv.Configuration = c
 	}
 }
 
@@ -56,58 +54,38 @@ func main() {
 			if err := oldBefore(ctx); err != nil {
 				return err
 			}
-			var cb goxr.CombinedBox
-			for _, base := range ctx.Args() {
-				path := base
-				parts := strings.SplitN(base, "=", 2)
-				if len(parts) > 1 {
-					path = parts[1]
-				}
-				if fi, err := os.Stat(path); err != nil {
-					return err
-				} else if fi.IsDir() {
-					if box, err := fs.OpenBox(base); err != nil {
-						return err
-					} else {
+			if ctx.NArg() > 0 {
+				var cb goxr.CombinedBox
+				for _, base := range ctx.Args() {
+					if box, err := packed.OpenBox(base); err == nil {
 						cb = cb.With(box)
-					}
-				} else {
-					if box, err := packed.OpenBox(base); err != nil {
+					} else if !common.IsDoesNotContainBox(err) {
+						return err
+					} else if box, err := fs.OpenBox(base); err != nil {
 						return err
 					} else {
 						cb = cb.With(box)
 					}
 				}
-			}
-			if len(cb) == 0 {
+				srv.Box = cb
+			} else {
 				if box, err := fs.OpenBox("."); err != nil {
 					return err
 				} else {
-					cb = cb.With(box)
+					srv.Box = box
 				}
 			}
-			if c, err := configuration.OfBox(cb); err != nil {
+			if c, err := configuration.OfBox(srv.Box); err != nil {
 				return err
 			} else {
-				if logLevel.value == nil {
-					logLevel.value = c.Logging.GetLevel()
-				}
 				srv.Configuration = c
-				srv.Box = cb
 			}
 			return nil
 		}
 	}
-	if config != nil {
-		srv.Configuration = *config
-		httpAddress = config.Listen.GetHttpAddress()
-		logLevel.value = config.Logging.GetLevel()
-	}
-
-	app.Flags = append(app.Flags, cli.StringFlag{
-		Name:        "httpAddress",
-		Value:       httpAddress,
-		Destination: &httpAddress,
+	app.Flags = append(app.Flags, cli.GenericFlag{
+		Name:  "httpAddress",
+		Value: httpAddress,
 	})
 	fixLogLevelFlag(&app.Flags)
 
@@ -116,11 +94,10 @@ func main() {
 		if err := oldBefore(ctx); err != nil {
 			return err
 		}
-		if logLevel.value != nil {
-			if err := log.SetLevel(logLevel.value); err != nil {
-				return err
-			}
+		if err := log.SetLevel(logLevel.evaluate(srv.Configuration.Logging.GetLevel())); err != nil {
+			return err
 		}
+		srv.Configuration.Listen.HttpAddress = httpAddress.evaluate(srv.Configuration.Listen.HttpAddress)
 		return nil
 	}
 
@@ -171,4 +148,47 @@ func (instance fixedLogLevel) String() string {
 		return ""
 	}
 	return instance.value.String()
+}
+
+func (instance fixedLogLevel) evaluate(fromConfig log.Level) log.Level {
+	v := instance.value
+	if v != nil {
+		return v
+	}
+	if fromConfig != nil {
+		return fromConfig
+	}
+	return log.GetLevel()
+}
+
+type fixedString struct {
+	def   string
+	value *string
+}
+
+func (instance *fixedString) Set(plain string) error {
+	if plain == "" {
+		instance.value = nil
+		return nil
+	}
+	instance.value = &plain
+	return nil
+}
+
+func (instance fixedString) String() string {
+	if instance.value == nil {
+		return ""
+	}
+	return *instance.value
+}
+
+func (instance fixedString) evaluate(fromConfig string) string {
+	v := instance.value
+	if v != nil {
+		return *v
+	}
+	if fromConfig != "" {
+		return fromConfig
+	}
+	return instance.def
 }

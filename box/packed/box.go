@@ -5,6 +5,7 @@ import (
 	"github.com/blaubaer/goxr/common"
 	"github.com/blaubaer/goxr/entry"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type Box struct {
 
 	EntryToFileTransformer ToFileTransformer `msgpack:"-"`
 	OnClose                common.OnClose    `msgpack:"-"`
+	Prefix                 string            `msgpack:"-"`
 }
 
 func (instance Box) String() string {
@@ -41,18 +43,33 @@ func (instance Box) LongVersion() string {
 		instance.Version, instance.Revision)
 }
 
+func (instance *Box) resolvePath(name string) (string, error) {
+	candidate := entry.CleanPath(name)
+	if instance.Prefix != "" {
+		if !strings.HasPrefix(candidate, instance.Prefix) {
+			return "", os.ErrNotExist
+		}
+		candidate = candidate[len(instance.Prefix):]
+	}
+	return candidate, nil
+}
+
 func (instance *Box) Open(pathname string) (common.File, error) {
-	if e := instance.Entries.Find(pathname); e == nil {
+	if candidate, err := instance.resolvePath(pathname); err != nil {
+		return nil, common.NewPathError("open", pathname, err)
+	} else if e := instance.Entries.Find(candidate); e == nil {
 		return nil, common.NewPathError("open", pathname, os.ErrNotExist)
 	} else if instance.EntryToFileTransformer == nil {
 		return nil, common.NewPathError("open", pathname, entry.ErrNoToFileTransformerProvided)
 	} else {
-		return instance.EntryToFileTransformer("open", pathname, *e)
+		return instance.EntryToFileTransformer("open", candidate, *e)
 	}
 }
 
 func (instance *Box) Info(pathname string) (os.FileInfo, error) {
-	if e := instance.Entries.Find(pathname); e == nil {
+	if candidate, err := instance.resolvePath(pathname); err != nil {
+		return nil, common.NewPathError("open", pathname, err)
+	} else if e := instance.Entries.Find(candidate); e == nil {
 		return nil, common.NewPathError("info", pathname, os.ErrNotExist)
 	} else {
 		return *e, nil

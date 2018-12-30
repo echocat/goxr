@@ -4,7 +4,6 @@ import (
 	"github.com/blaubaer/goxr/common"
 	"github.com/blaubaer/goxr/entry"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -38,17 +37,21 @@ type Box struct {
 	prefix            string
 }
 
-func (instance *Box) Open(name string) (common.File, error) {
+func (instance *Box) resolvePath(name string) (string, error) {
 	candidate := entry.CleanPath(name)
 	if instance.prefix != "" {
 		if !strings.HasPrefix(candidate, instance.prefix) {
-			return nil, common.NewPathError("open", name, os.ErrNotExist)
+			return "", os.ErrNotExist
 		}
 		candidate = candidate[len(instance.prefix):]
 	}
-	candidate = filepath.Clean(filepath.Join(instance.base, filepath.FromSlash(candidate)))
+	return filepath.Clean(filepath.Join(instance.base, filepath.FromSlash(candidate))), nil
+}
 
-	if candidate != instance.base && !strings.HasPrefix(candidate, instance.baseWithSeparator) {
+func (instance *Box) Open(name string) (common.File, error) {
+	if candidate, err := instance.resolvePath(name); err != nil {
+		return nil, common.NewPathError("open", name, err)
+	} else if candidate != instance.base && !strings.HasPrefix(candidate, instance.baseWithSeparator) {
 		return nil, common.NewPathError("open", name, os.ErrNotExist)
 	} else if f, err := os.Open(candidate); err != nil {
 		return nil, common.NewPathError("open", name, err)
@@ -58,8 +61,9 @@ func (instance *Box) Open(name string) (common.File, error) {
 }
 
 func (instance *Box) Info(name string) (os.FileInfo, error) {
-	candidate := filepath.Clean(filepath.Join(instance.base, filepath.FromSlash(path.Clean(name))))
-	if candidate != instance.base && !strings.HasPrefix(candidate, instance.baseWithSeparator) {
+	if candidate, err := instance.resolvePath(name); err != nil {
+		return nil, common.NewPathError("info", name, err)
+	} else if candidate != instance.base && !strings.HasPrefix(candidate, instance.baseWithSeparator) {
 		return nil, common.NewPathError("info", name, os.ErrNotExist)
 	} else if fi, err := os.Stat(candidate); err != nil {
 		return nil, common.NewPathError("info", name, err)
