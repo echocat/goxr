@@ -47,13 +47,6 @@ func main() {
 		app.Description = pb.Description
 		app.Compiled = pb.Built
 		app.Version = pb.ShortString()
-		app.Commands = []cli.Command{{
-			Name:  "version",
-			Usage: "Print the actual version and other useful information.",
-			Action: func(ctx *cli.Context) error {
-				return common.Writef(ctx.App.Writer, "%v\n", pb)
-			},
-		}}
 	} else {
 		app.Description = `Either serves the content of the given [box file] or from a given [base directory].
    If nothing is provided the current work directory is assumed as base directory.`
@@ -132,11 +125,7 @@ func main() {
 	}
 
 	app.Action = func(ctx *cli.Context) error {
-		if common.CliHelpRequested {
-			return cli.ShowAppHelp(ctx)
-		} else {
-			return srv.Run()
-		}
+		return srv.Run()
 	}
 
 	defer func() {

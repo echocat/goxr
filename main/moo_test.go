@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestMoo(t *testing.T) {
+func DisabledTestMoo(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	box, err := goxr.OpenBox("../common", "../log")

@@ -27,11 +27,11 @@ jobs:
 
         - export LDNFLAG="-X github.com/blaubaer/goxr.name=TESTgoxrTEST"
         - GOOS=linux GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-linux-amd64        ./main
-        - dist/goxr-linux-amd64        version
+        - dist/goxr-linux-amd64        --version
 
         - export LDNFLAG="-X github.com/blaubaer/goxr.name=TESTgoxr-serverTEST"
         - GOOS=linux GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-amd64 ./server/main
-        - dist/goxr-server-linux-amd64 version
+        - dist/goxr-server-linux-amd64 --version
 
     - stage: release
       name: Release

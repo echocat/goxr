@@ -9,17 +9,16 @@ import (
 )
 
 var (
-	CliHelpRequested bool
-	versionCommand   = cli.Command{
-		Name:  "version",
-		Usage: "Print the actual version and other useful information.",
-		Action: func(ctx *cli.Context) error {
-			return Writef(ctx.App.Writer, "%v\n", runtime.GetRuntime())
-		},
-	}
+	CliHelpRequested    bool
+	CliVersionRequested bool
 )
 
 func init() {
+	cli.VersionFlag = cli.BoolFlag{
+		Name:        "version",
+		Usage:       "Print the actual version and other useful information.",
+		Destination: &CliVersionRequested,
+	}
 	cli.HelpFlag = cli.BoolFlag{
 		Name:        "help, h",
 		Usage:       "Show help",
@@ -72,6 +71,10 @@ OPTIONS:
 `
 }
 
+func ShowAppVersion(ctx *cli.Context) error {
+	return Writef(ctx.App.Writer, "%v\n", runtime.GetRuntime())
+}
+
 func NewApp() *cli.App {
 	r := runtime.GetRuntime()
 
@@ -83,14 +86,33 @@ func NewApp() *cli.App {
 	result.HideVersion = true
 	result.Flags = append(result.Flags, log.DefaultLogger.Flags()...)
 	result.Flags = append(result.Flags, cli.HelpFlag)
+	result.Flags = append(result.Flags, cli.VersionFlag)
 
-	result.Commands = append(result.Commands, versionCommand)
+	result.Commands = []cli.Command{}
 
 	result.Writer = os.Stderr
 	result.ErrWriter = os.Stderr
 
-	result.Before = func(*cli.Context) error {
-		return log.DefaultLogger.Init()
+	result.Before = func(ctx *cli.Context) error {
+		if err := log.DefaultLogger.Init(); err != nil {
+			return err
+		} else if CliHelpRequested {
+			if err := cli.ShowAppHelp(ctx); err != nil {
+				return err
+			} else {
+				os.Exit(0)
+				return nil
+			}
+		} else if CliVersionRequested {
+			if err := ShowAppVersion(ctx); err != nil {
+				return err
+			} else {
+				os.Exit(0)
+				return nil
+			}
+		} else {
+			return nil
+		}
 	}
 
 	return result
