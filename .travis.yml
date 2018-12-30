@@ -51,12 +51,12 @@ jobs:
         - GOOS=windows GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-windows-386.exe          ./main
 
         - export LDNFLAG="-X github.com/blaubaer/goxr/runtime.name=goxr-server"
-        - GOOS=linux   GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-amd64       ./main
-        - GOOS=linux   GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-386         ./main
-        - GOOS=darwin  GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-darwin-amd64      ./main
-        - GOOS=darwin  GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-darwin-386        ./main
-        - GOOS=windows GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-amd64.exe ./main
-        - GOOS=windows GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-386.exe   ./main
+        - GOOS=linux   GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-amd64       ./server/main
+        - GOOS=linux   GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-386         ./server/main
+        - GOOS=darwin  GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-darwin-amd64      ./server/main
+        - GOOS=darwin  GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-darwin-386        ./server/main
+        - GOOS=windows GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-amd64.exe ./server/main
+        - GOOS=windows GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-386.exe   ./server/main
 
       deploy:
         provider: releases
