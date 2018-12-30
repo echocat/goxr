@@ -1,0 +1,70 @@
+language: go
+go:
+  - 1.11.x
+install: skip
+os:
+  - linux
+services:
+  - docker
+env:
+  global:
+    - GO111MODULE=on
+    - CGO_ENABLED=0
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $HOME/gopath/pkg/mod
+script: skip
+
+jobs:
+  include:
+    - stage: test
+      name: Run Tests
+      script:
+        - go test -v ./...
+
+        - export LDFLAGS="-X github.com/blaubaer/goxr.version=TEST${TRAVIS_BRANCH}TEST -X github.com/blaubaer/goxr.revision=TEST${TRAVIS_COMMIT}TEST -X github.com/blaubaer/goxr.built=`date -u +%Y-%m-%dT%H:%M:%SZ`"
+
+        - export LDNFLAG="-X github.com/blaubaer/goxr.name=TESTgoxrTEST"
+        - GOOS=linux GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-linux-amd64        ./main
+        - dist/goxr-linux-amd64        version
+
+        - export LDNFLAG="-X github.com/blaubaer/goxr.name=TESTgoxr-serverTEST"
+        - GOOS=linux GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-amd64 ./server/main
+        - dist/goxr-server-linux-amd64 version
+
+    - stage: release
+      name: Release
+      if: tag =~ ^v\d+\.\d+\.\d+|snapshot-.+$
+      before_script:
+        - mkdir -p dist
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      script:
+        - export LDFLAGS="-X github.com/blaubaer/goxr.version=${TRAVIS_BRANCH} -X github.com/blaubaer/goxr.revision=${TRAVIS_COMMIT} -X github.com/blaubaer/goxr.built=`date -u +%Y-%m-%dT%H:%M:%SZ`"
+
+        - export LDNFLAG="-X github.com/blaubaer/goxr.name=goxr"
+        - GOOS=linux   GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-linux-amd64              ./main
+        - GOOS=linux   GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-linux-386                ./main
+        - GOOS=darwin  GOARCH=amd64 go build -ldflags $LDNFLAG "$LDFLAGS" -o dist/goxr-darwin-amd64             ./main
+        - GOOS=darwin  GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-darwin-386               ./main
+        - GOOS=windows GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-windows-amd64.exe        ./main
+        - GOOS=windows GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-windows-386.exe          ./main
+
+
+        - export LDNFLAG="-X github.com/blaubaer/goxr.name=goxr-server"
+        - GOOS=linux   GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-amd64       ./main
+        - GOOS=linux   GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-386         ./main
+        - GOOS=darwin  GOARCH=amd64 go build -ldflags $LDNFLAG "$LDFLAGS" -o dist/goxr-server-darwin-amd64      ./main
+        - GOOS=darwin  GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-darwin-386        ./main
+        - GOOS=windows GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-amd64.exe ./main
+        - GOOS=windows GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-386.exe   ./main
+
+      deploy:
+        provider: releases
+        api_key: "$GITHUB_DEPLOY_TOKEN"
+        file_glob: true
+        file: dist/*
+        skip_cleanup: true
+        name: $TRAVIS_TAG
+        on:
+          tags: true
