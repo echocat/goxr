@@ -4,6 +4,8 @@ import (
 	"github.com/blaubaer/goxr/log"
 	"github.com/blaubaer/goxr/runtime"
 	"github.com/urfave/cli"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
 )
@@ -11,6 +13,12 @@ import (
 var (
 	CliHelpRequested    bool
 	CliVersionRequested bool
+	cliXpprofListen     string
+	cliXpprofListenFlag = cli.StringFlag{
+		Name:        "X-pprof-listen",
+		Hidden:      true,
+		Destination: &cliXpprofListen,
+	}
 )
 
 func init() {
@@ -87,6 +95,7 @@ func NewApp() *cli.App {
 	result.Flags = append(result.Flags, log.DefaultLogger.Flags()...)
 	result.Flags = append(result.Flags, cli.HelpFlag)
 	result.Flags = append(result.Flags, cli.VersionFlag)
+	result.Flags = append(result.Flags, cliXpprofListenFlag)
 
 	result.Commands = []cli.Command{}
 
@@ -111,11 +120,28 @@ func NewApp() *cli.App {
 				return nil
 			}
 		} else {
+			cliXpprofHandler()
 			return nil
 		}
 	}
 
 	return result
+}
+
+func cliXpprofHandler() {
+	if cliXpprofListen != "" {
+		go func() {
+			log.WithField("listenAddress", cliXpprofListen).
+				Warnf("DO NOT USE IN PRODUCTION!"+
+					" pprof server was activated for debugging at listen address %s."+
+					" This functionality is only for debug purposes.",
+					cliXpprofListen,
+				)
+			if err := http.ListenAndServe(cliXpprofListen, nil); err != nil {
+				panic(err)
+			}
+		}()
+	}
 }
 
 func RunApp(a *cli.App) {

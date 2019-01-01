@@ -1,12 +1,10 @@
 package server
 
 import (
-	"fmt"
 	"github.com/blaubaer/goxr"
-	"github.com/blaubaer/goxr/common"
+	"github.com/blaubaer/goxr/log"
+	"github.com/valyala/fasthttp"
 	"net/http"
-	"os"
-	"time"
 )
 
 func BoxToHttpFileSystem(box goxr.Box) http.FileSystem {
@@ -21,13 +19,6 @@ func (instance *httpFS) Open(path string) (http.File, error) {
 	return instance.Box.Open(path)
 }
 
-func (instance *HttpFileHandler) writeCacheHeadersFor(fi os.FileInfo, to http.ResponseWriter) {
-	if efi, ok := fi.(common.ExtendedFileInfo); ok {
-		to.Header().Set("Etag", fmt.Sprintf(`"%s"`, efi.ChecksumString()))
-	}
-	to.Header().Set("Date", fi.ModTime().Truncate(time.Second).Format(time.RFC1123))
-}
-
 func bodyAllowedForStatus(status int) bool {
 	switch {
 	case status >= 100 && status <= 199:
@@ -38,4 +29,15 @@ func bodyAllowedForStatus(status int) bool {
 		return false
 	}
 	return true
+}
+
+func reportNotHandableProblem(err error, ctx *fasthttp.RequestCtx, logger log.Logger) {
+	logger.
+		WithField("remote", ctx.RemoteAddr().String()).
+		WithField("local", ctx.LocalAddr().String()).
+		WithField("host", string(ctx.Host())).
+		WithField("uri", string(ctx.RequestURI())).
+		WithField("errorType", "notHandable").
+		WithError(err).
+		Warn()
 }

@@ -10,8 +10,8 @@ var (
 	noHttpTime = HttpTime(time.Time{})
 )
 
-func ErrorToHttpResponse(err error) HttpResponse {
-	r := HttpResponse{
+func ErrorToHttpResponse(err error) JsonResponse {
+	r := JsonResponse{
 		Code: http.StatusInternalServerError,
 	}
 	if os.IsNotExist(err) {

@@ -1,13 +1,15 @@
 package server
 
 import (
+	"bufio"
 	"encoding/json"
 	"github.com/blaubaer/goxr/log"
+	"github.com/valyala/fasthttp"
 	"net/http"
 	"time"
 )
 
-type HttpResponse struct {
+type JsonResponse struct {
 	Path    string   `json:"path,omitempty"`
 	Code    int      `json:"code,omitempty"`
 	Message string   `json:"message,omitempty"`
@@ -15,44 +17,30 @@ type HttpResponse struct {
 	Time    HttpTime `json:"time,omitempty"`
 }
 
-func (instance HttpResponse) Serve(resp http.ResponseWriter, req *http.Request) error {
+func (instance JsonResponse) Serve(ctx *fasthttp.RequestCtx, logger log.Logger) {
 	t := instance
 	if !bodyAllowedForStatus(t.Code) {
 		t.Code = 200
 	}
-	t = t.Complete(req)
+	t = t.Complete(ctx)
 
-	resp.Header().Set("Content-Type", "application/json")
-	resp.Header().Set("X-Content-Type-Options", "nosniff")
-	resp.WriteHeader(t.Code)
+	ctx.Response.Header.Set("Content-Type", "application/json")
+	ctx.Response.Header.Set("X-Content-Type-Options", "nosniff")
+	ctx.Response.Header.SetStatusCode(t.Code)
 
-	encoder := json.NewEncoder(resp)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(t)
-}
-
-func (instance HttpResponse) ServeOrWarn(resp http.ResponseWriter, req *http.Request, logger log.Logger) {
-	if err := instance.Serve(resp, req); err != nil {
-		var path string
-		if req != nil && req.URL != nil {
-			path = req.URL.Path
+	ctx.Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "  ")
+		if err := encoder.Encode(t); err != nil {
+			reportNotHandableProblem(err, ctx, logger)
 		}
-		logger.
-			WithError(err).
-			WithField("path", path).
-			WithField("code", instance.Code).
-			Warnf("Could not write response to client.")
-	}
+	})
 }
 
-func (instance HttpResponse) ServeOrWarnUsing(resp http.ResponseWriter, req *http.Request, hasLogger log.HasLogger) {
-	instance.ServeOrWarn(resp, req, hasLogger.Log())
-}
-
-func (instance HttpResponse) Complete(req *http.Request) HttpResponse {
+func (instance JsonResponse) Complete(ctx *fasthttp.RequestCtx) JsonResponse {
 	result := instance
-	if result.Path == "" && req != nil && req.URL != nil {
-		result.Path = req.URL.Path
+	if result.Path == "" {
+		result.Path = string(ctx.Path())
 	}
 	if result.Message == "" {
 		result.Message = http.StatusText(result.Code)

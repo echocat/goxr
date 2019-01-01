@@ -68,6 +68,30 @@ func WithError(err error) Logger {
 	return DefaultLogger.WithError(err)
 }
 
+func Trace(what ...interface{}) {
+	DefaultLogger.Trace(what...)
+}
+
+func Debug(what ...interface{}) {
+	DefaultLogger.Debug(what...)
+}
+
+func Info(what ...interface{}) {
+	DefaultLogger.Info(what...)
+}
+
+func Warn(what ...interface{}) {
+	DefaultLogger.Warn(what...)
+}
+
+func Error(what ...interface{}) {
+	DefaultLogger.Error(what...)
+}
+
+func Fatal(what ...interface{}) {
+	DefaultLogger.Fatal(what...)
+}
+
 func Tracef(msg string, args ...interface{}) {
 	DefaultLogger.Tracef(msg, args...)
 }

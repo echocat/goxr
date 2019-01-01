@@ -5,33 +5,32 @@ import (
 	"github.com/blaubaer/goxr"
 	"os"
 	"regexp"
-	"strconv"
 )
 
 type Paths struct {
-	Catchall    Catchall          `yaml:"catchall,omitempty"`
-	Index       *string           `yaml:"index,omitempty"`
-	StatusCodes map[string]string `yaml:"statusCodes,omitempty"`
-	Includes    *[]string         `yaml:"includes,omitempty"`
-	Excludes    *[]string         `yaml:"excludes,omitempty"`
+	Catchall    Catchall       `yaml:"catchall,omitempty"`
+	Index       *string        `yaml:"index,omitempty"`
+	StatusCodes map[int]string `yaml:"statusCodes,omitempty"`
+	Includes    *[]string      `yaml:"includes,omitempty"`
+	Excludes    *[]string      `yaml:"excludes,omitempty"`
 
-	statusCodesRegexpCache map[string]*regexp.Regexp
-	includesRegexpCache    *[]*regexp.Regexp
-	excludesRegexpCache    *[]*regexp.Regexp
+	defaultFallback     string
+	includesRegexpCache *[]*regexp.Regexp
+	excludesRegexpCache *[]*regexp.Regexp
 }
 
 func (instance Paths) GetIndex() string {
 	r := instance.Index
 	if r == nil {
-		return "/index.html"
+		return instance.defaultFallback
 	}
 	return *r
 }
 
-func (instance Paths) GetStatusCodes() map[string]string {
+func (instance Paths) GetStatusCodes() map[int]string {
 	r := instance.StatusCodes
 	if r == nil {
-		return make(map[string]string)
+		return make(map[int]string)
 	}
 	return r
 }
@@ -54,26 +53,12 @@ func (instance Paths) GetExcludes() []string {
 	return *r
 }
 
-func (instance *Paths) FindStatusCode(code int) (string, error) {
+func (instance *Paths) FindStatusCode(code int) string {
 	r := instance.StatusCodes
 	if r == nil {
-		return "", nil
+		return ""
 	}
-	for pattern, path := range r {
-		rx := instance.statusCodesRegexpCache[pattern]
-		if rx == nil {
-			if crx, err := regexp.Compile(pattern); err != nil {
-				return "", fmt.Errorf("cannot compile pattern '%s' for path '%s': %v", pattern, path, err)
-			} else {
-				instance.statusCodesRegexpCache[pattern] = crx
-				rx = crx
-			}
-		}
-		if rx.MatchString(strconv.Itoa(code)) {
-			return path, nil
-		}
-	}
-	return "", nil
+	return r[code]
 }
 
 func (instance *Paths) PathAllowed(candidate string) (bool, error) {
@@ -122,34 +107,35 @@ func (instance *Paths) PathAllowed(candidate string) (bool, error) {
 func (instance *Paths) Validate(using goxr.Box) (errors []error) {
 	errors = append(errors, instance.Catchall.Validate(using)...)
 	errors = append(errors, instance.validateIndex(using)...)
-	errors = append(errors, instance.rebuildStatusCodesCache(using)...)
+	errors = append(errors, instance.validateStatusCodes(using)...)
 	errors = append(errors, instance.rebuildIncludesCache()...)
 	errors = append(errors, instance.rebuildExcludesCache()...)
 	return
 }
 
 func (instance *Paths) validateIndex(using goxr.Box) (errors []error) {
-	r := instance.GetIndex()
-	if r != "" {
-		return
-	}
-	if _, err := using.Info(r); os.IsNotExist(err) {
-		errors = append(errors, fmt.Errorf(`paths.index = "%s" - path does not exist in box`, r))
-	} else if err != nil {
-		errors = append(errors, fmt.Errorf(`paths.index = "%s" - cannot read path information: %v`, r, err))
+	r := instance.Index
+	if r != nil {
+		if _, err := using.Info(*r); os.IsNotExist(err) {
+			errors = append(errors, fmt.Errorf(`paths.index = "%s" - path does not exist in box`, *r))
+		} else if err != nil {
+			errors = append(errors, fmt.Errorf(`paths.index = "%s" - cannot read path information: %v`, *r, err))
+		}
+	} else {
+		if _, err := using.Info("/index.html"); os.IsNotExist(err) {
+			instance.defaultFallback = ""
+		} else if err != nil {
+			errors = append(errors, fmt.Errorf(`cannot read path information for default index "/index.html": %v`, err))
+		} else {
+			instance.defaultFallback = "/index.html"
+		}
 	}
 	return
 }
 
-func (instance *Paths) rebuildStatusCodesCache(using goxr.Box) (errors []error) {
+func (instance *Paths) validateStatusCodes(using goxr.Box) (errors []error) {
 	r := instance.GetStatusCodes()
 	for pattern, path := range r {
-		if crx, err := regexp.Compile(pattern); err != nil {
-			errors = append(errors, fmt.Errorf(`paths.statusCodes[%s]= "%s" - statusCode pattern invalid: %v`, pattern, path, err))
-		} else {
-			instance.statusCodesRegexpCache[pattern] = crx
-		}
-
 		if _, err := using.Info(path); os.IsNotExist(err) {
 			errors = append(errors, fmt.Errorf(`paths.statusCodes[%s]= "%s" - path does not exist in box`, pattern, path))
 		} else if err != nil {

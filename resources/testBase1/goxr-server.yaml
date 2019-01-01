@@ -1,0 +1,10 @@
+paths:
+  index: /index.html
+  catchall:
+    target: /index.html
+response:
+  gzip: true
+  headers:
+    "X-foo":
+      - "bar1"
+      - "bar2"
