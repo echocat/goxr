@@ -135,11 +135,11 @@ func (instance *Paths) validateIndex(using goxr.Box) (errors []error) {
 
 func (instance *Paths) validateStatusCodes(using goxr.Box) (errors []error) {
 	r := instance.GetStatusCodes()
-	for pattern, path := range r {
+	for code, path := range r {
 		if _, err := using.Info(path); os.IsNotExist(err) {
-			errors = append(errors, fmt.Errorf(`paths.statusCodes[%s]= "%s" - path does not exist in box`, pattern, path))
+			errors = append(errors, fmt.Errorf(`paths.statusCodes[%d]= "%s" - path does not exist in box`, code, path))
 		} else if err != nil {
-			errors = append(errors, fmt.Errorf(`paths.statusCodes[%s]= "%s" - cannot read path information: %v`, pattern, path, err))
+			errors = append(errors, fmt.Errorf(`paths.statusCodes[%d]= "%s" - cannot read path information: %v`, code, path, err))
 		}
 	}
 	return
