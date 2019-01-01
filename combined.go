@@ -3,7 +3,7 @@ package goxr
 import (
 	"bytes"
 	"errors"
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 	"os"
 )
 

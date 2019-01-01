@@ -23,26 +23,32 @@ jobs:
       script:
         - go test -v ./...
 
-        - export LDFLAGS="-X github.com/blaubaer/goxr/runtime.version=TEST${TRAVIS_BRANCH}TEST -X github.com/blaubaer/goxr/runtime.revision=TEST${TRAVIS_COMMIT}TEST -X github.com/blaubaer/goxr/runtime.built=`date -u +%Y-%m-%dT%H:%M:%SZ`"
+        - export LDFLAGS="-X github.com/echocat/goxr/runtime.version=TEST${TRAVIS_BRANCH}TEST -X github.com/echocat/goxr/runtime.revision=TEST${TRAVIS_COMMIT}TEST -X github.com/echocat/goxr/runtime.built=`date -u +%Y-%m-%dT%H:%M:%SZ`"
 
-        - export LDNFLAG="-X github.com/blaubaer/goxr/runtime.name=TESTgoxrTEST"
+        - export LDNFLAG="-X github.com/echocat/goxr/runtime.name=TESTgoxrTEST"
         - GOOS=linux GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-linux-amd64        ./main
         - dist/goxr-linux-amd64        --version
 
-        - export LDNFLAG="-X github.com/blaubaer/goxr/runtime.name=TESTgoxr-serverTEST"
+        - export LDNFLAG="-X github.com/echocat/goxr/runtime.name=TESTgoxr-serverTEST"
         - GOOS=linux GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-amd64 ./server/main
         - dist/goxr-server-linux-amd64 --version
+
+        - docker build -f Dockerfile -t        echocat/goxr:alpine-$TRAVIS_BRANCH .
+        - sh .docker/test-image.sh             echocat/goxr:alpine-$TRAVIS_BRANCH
+
+        - docker build -f Dockerfile.ubuntu -t echocat/goxr:ubuntu-$TRAVIS_BRANCH .
+        - sh .docker/test-image.sh             echocat/goxr:ubuntu-$TRAVIS_BRANCH
 
     - stage: release
       name: Release
       if: tag =~ ^v\d+\.\d+\.\d+|snapshot-.+$
       before_script:
         - mkdir -p dist
-        # - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
       script:
-        - export LDFLAGS="-X github.com/blaubaer/goxr/runtime.version=${TRAVIS_BRANCH} -X github.com/blaubaer/goxr/runtime.revision=${TRAVIS_COMMIT} -X github.com/blaubaer/goxr/runtime.built=`date -u +%Y-%m-%dT%H:%M:%SZ`"
+        - export LDFLAGS="-X github.com/echocat/goxr/runtime.version=${TRAVIS_BRANCH} -X github.com/echocat/goxr/runtime.revision=${TRAVIS_COMMIT} -X github.com/echocat/goxr/runtime.built=`date -u +%Y-%m-%dT%H:%M:%SZ`"
 
-        - export LDNFLAG="-X github.com/blaubaer/goxr/runtime.name=goxr"
+        - export LDNFLAG="-X github.com/echocat/goxr/runtime.name=goxr"
         - GOOS=linux   GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-linux-amd64              ./main
         - GOOS=linux   GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-linux-386                ./main
         - GOOS=darwin  GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-darwin-amd64             ./main
@@ -50,7 +56,7 @@ jobs:
         - GOOS=windows GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-windows-amd64.exe        ./main
         - GOOS=windows GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-windows-386.exe          ./main
 
-        - export LDNFLAG="-X github.com/blaubaer/goxr/runtime.name=goxr-server"
+        - export LDNFLAG="-X github.com/echocat/goxr/runtime.name=goxr-server"
         - GOOS=linux   GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-amd64       ./server/main
         - GOOS=linux   GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-linux-386         ./server/main
         - GOOS=darwin  GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-darwin-amd64      ./server/main
@@ -58,6 +64,18 @@ jobs:
         - GOOS=windows GOARCH=amd64 go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-amd64.exe ./server/main
         - GOOS=windows GOARCH=386   go build -ldflags "$LDNFLAG $LDFLAGS" -o dist/goxr-server-windows-386.exe   ./server/main
 
+        - docker build -t echocat/goxr:alpine-$TRAVIS_BRANCH .
+        - docker build -t echocat/goxr:ubuntu-$TRAVIS_BRANCH .
+        - docker tag  echocat/goxr:alpine-$TRAVIS_BRANCH echocat/goxr:latest
+        - docker tag  echocat/goxr:alpine-$TRAVIS_BRANCH echocat/goxr:$TRAVIS_BRANCH
+        - docker tag  echocat/goxr:alpine-$TRAVIS_BRANCH echocat/goxr:alpine
+        - docker tag  echocat/goxr:ubuntu-$TRAVIS_BRANCH echocat/goxr:ubuntu
+        - docker push echocat/goxr:latest
+        - docker push echocat/goxr:$TRAVIS_BRANCH
+        - docker push echocat/goxr:alpine-$TRAVIS_BRANCH
+        - docker push echocat/goxr:alpine
+        - docker push echocat/goxr:ubuntu-$TRAVIS_BRANCH
+        - docker push echocat/goxr:ubuntu
       deploy:
         provider: releases
         api_key: "$GITHUB_DEPLOY_TOKEN"

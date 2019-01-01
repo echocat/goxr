@@ -1,7 +1,7 @@
 package entry
 
 import (
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 	"io"
 	"os"
 )

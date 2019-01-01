@@ -1,8 +1,8 @@
 package configuration
 
 import (
-	"github.com/blaubaer/goxr"
-	"github.com/blaubaer/goxr/log"
+	"github.com/echocat/goxr"
+	"github.com/echocat/goxr/log"
 )
 
 type Logging struct {

@@ -1,8 +1,8 @@
 package common
 
 import (
-	"github.com/blaubaer/goxr/log"
-	"github.com/blaubaer/goxr/runtime"
+	"github.com/echocat/goxr/log"
+	"github.com/echocat/goxr/runtime"
 	"github.com/urfave/cli"
 	"net/http"
 	_ "net/http/pprof"

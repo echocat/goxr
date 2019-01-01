@@ -1,6 +1,6 @@
 package configuration
 
-import "github.com/blaubaer/goxr"
+import "github.com/echocat/goxr"
 
 type Response struct {
 	MimeTypes map[string]string   `yaml:"mimeTypes,omitempty"`

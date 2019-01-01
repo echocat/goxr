@@ -1,7 +1,7 @@
 package packed
 
 import (
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 	. "github.com/onsi/gomega"
 	"os"
 	"testing"

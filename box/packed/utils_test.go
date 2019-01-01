@@ -2,7 +2,7 @@ package packed
 
 import (
 	"fmt"
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 	. "github.com/onsi/gomega"
 	"io"
 	"io/ioutil"

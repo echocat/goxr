@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/blaubaer/goxr"
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr"
+	"github.com/echocat/goxr/common"
 	. "github.com/onsi/gomega"
 	"math/rand"
 	"os"

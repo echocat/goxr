@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/blaubaer/goxr/box/packed"
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/box/packed"
+	"github.com/echocat/goxr/common"
 	"github.com/urfave/cli"
 	"os"
 )

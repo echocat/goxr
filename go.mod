@@ -1,4 +1,4 @@
-module github.com/blaubaer/goxr
+module github.com/echocat/goxr
 
 require (
 	github.com/edsrzf/mmap-go v1.0.0

@@ -3,9 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/blaubaer/goxr/box/packed"
-	"github.com/blaubaer/goxr/log"
-	"github.com/blaubaer/goxr/runtime"
+	"github.com/echocat/goxr/box/packed"
+	"github.com/echocat/goxr/log"
+	"github.com/echocat/goxr/runtime"
 	"github.com/urfave/cli"
 	"io"
 	"net/http"
@@ -81,7 +81,7 @@ func (instance *CreateServerCommand) CliFlags() []cli.Flag {
 		cli.StringFlag{
 			Name:        "downloadUrl",
 			Usage:       `Where to download the .`,
-			Value:       `https://github.com/blaubaer/goxr/releases/download/{{.Version}}/goxr-server-{{.Os}}-{{.Arch}}{{.Os|ext}}`,
+			Value:       `https://github.com/echocat/goxr/releases/download/{{.Version}}/goxr-server-{{.Os}}-{{.Arch}}{{.Os|ext}}`,
 			Destination: &instance.DownloadUrl,
 		},
 		cli.BoolFlag{

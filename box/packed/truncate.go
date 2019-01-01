@@ -2,7 +2,7 @@ package packed
 
 import (
 	"bufio"
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 	"os"
 )
 

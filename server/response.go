@@ -3,7 +3,7 @@ package server
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/blaubaer/goxr/log"
+	"github.com/echocat/goxr/log"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"time"

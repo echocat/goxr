@@ -2,8 +2,8 @@ package packed
 
 import (
 	"fmt"
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/entry"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/entry"
 	"os"
 	"strings"
 	"time"

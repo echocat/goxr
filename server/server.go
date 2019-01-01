@@ -2,10 +2,10 @@ package server
 
 import (
 	"fmt"
-	"github.com/blaubaer/goxr"
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/log"
-	"github.com/blaubaer/goxr/server/configuration"
+	"github.com/echocat/goxr"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/log"
+	"github.com/echocat/goxr/server/configuration"
 	"github.com/valyala/fasthttp"
 	"mime"
 	"net/http"

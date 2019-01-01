@@ -1,11 +1,11 @@
 package goxr
 
 import (
-	"github.com/blaubaer/goxr/box/fs"
-	"github.com/blaubaer/goxr/box/packed"
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/log"
-	"github.com/blaubaer/goxr/runtime"
+	"github.com/echocat/goxr/box/fs"
+	"github.com/echocat/goxr/box/packed"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/log"
+	"github.com/echocat/goxr/runtime"
 	"io"
 	"os"
 	"path/filepath"
@@ -17,7 +17,7 @@ type OnFallbackToFsBoxFunc func(packedBoxCandidateFilename string, bases []strin
 
 var (
 	// This variable could easily set while build time using:
-	// go build -ldflags="-X github.com/blaubaer/goxr.AllowFallbackToFsBox=false" .
+	// go build -ldflags="-X github.com/echocat/goxr.AllowFallbackToFsBox=false" .
 	// This is useful in case for behave differently for build versions of you application
 	AllowFallbackToFsBox                       = true
 	OnFallbackToFsBox    OnFallbackToFsBoxFunc = OnFallbackToFsBox_Default

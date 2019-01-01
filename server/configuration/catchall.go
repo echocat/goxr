@@ -2,7 +2,7 @@ package configuration
 
 import (
 	"fmt"
-	"github.com/blaubaer/goxr"
+	"github.com/echocat/goxr"
 	"os"
 	"regexp"
 )

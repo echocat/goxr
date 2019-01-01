@@ -3,8 +3,8 @@ package packed
 import (
 	"crypto/sha256"
 	"errors"
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/entry"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/entry"
 	"github.com/vmihailenco/msgpack"
 	_ "github.com/vmihailenco/msgpack"
 	"hash"

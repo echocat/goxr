@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/blaubaer/goxr"
-	"github.com/blaubaer/goxr/log"
+	"github.com/echocat/goxr"
+	"github.com/echocat/goxr/log"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )

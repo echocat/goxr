@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/blaubaer/goxr/entry"
+	"github.com/echocat/goxr/entry"
 	"github.com/urfave/cli"
 	"regexp"
 )

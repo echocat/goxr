@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/blaubaer/goxr/box/packed"
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/runtime"
-	"github.com/blaubaer/goxr/usagescanner"
+	"github.com/echocat/goxr/box/packed"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/runtime"
+	"github.com/echocat/goxr/usagescanner"
 	"github.com/urfave/cli"
 	"os"
 	"time"

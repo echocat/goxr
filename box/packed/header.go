@@ -3,7 +3,7 @@ package packed
 import (
 	"bufio"
 	"bytes"
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 	"hash/crc64"
 	"io"
 )

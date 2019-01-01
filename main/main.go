@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 )
 
 func main() {

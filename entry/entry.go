@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/blaubaer/goxr/common"
+	"github.com/echocat/goxr/common"
 	"os"
 	"time"
 )

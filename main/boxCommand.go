@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"github.com/blaubaer/goxr/box/packed"
+	"github.com/echocat/goxr/box/packed"
 	"github.com/urfave/cli"
 )
 

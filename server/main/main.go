@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/blaubaer/goxr"
-	"github.com/blaubaer/goxr/box/fs"
-	"github.com/blaubaer/goxr/box/packed"
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/log"
-	"github.com/blaubaer/goxr/runtime"
-	"github.com/blaubaer/goxr/server"
-	"github.com/blaubaer/goxr/server/configuration"
+	"github.com/echocat/goxr"
+	"github.com/echocat/goxr/box/fs"
+	"github.com/echocat/goxr/box/packed"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/log"
+	"github.com/echocat/goxr/runtime"
+	"github.com/echocat/goxr/server"
+	"github.com/echocat/goxr/server/configuration"
 	"github.com/urfave/cli"
 	"os"
 )

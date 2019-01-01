@@ -2,8 +2,8 @@ package packed
 
 import (
 	"bytes"
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/entry"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/entry"
 	"github.com/edsrzf/mmap-go"
 	"github.com/vmihailenco/msgpack"
 	"io"

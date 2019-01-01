@@ -1,6 +1,6 @@
 package configuration
 
-import "github.com/blaubaer/goxr"
+import "github.com/echocat/goxr"
 
 type Listen struct {
 	HttpAddress string `yaml:"httpAddress,omitempty"`

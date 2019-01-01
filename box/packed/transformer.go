@@ -1,8 +1,8 @@
 package packed
 
 import (
-	"github.com/blaubaer/goxr/common"
-	"github.com/blaubaer/goxr/entry"
+	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/entry"
 )
 
 type ToFileTransformer func(operation string, fullPath string, entry entry.Entry) (common.File, error)
