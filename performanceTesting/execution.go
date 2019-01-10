@@ -63,7 +63,7 @@ type executionResult struct {
 }
 
 func (instance executor) execute(te test, ta target) executionResult {
-	//instance.warmUp(te, ta)
+	instance.warmUp(te, ta)
 	result := executionResult{
 		Target: ta.name(),
 		URL:    ta.createUriFor(te),
@@ -82,6 +82,7 @@ func (instance executor) execute(te test, ta target) executionResult {
 }
 
 func (instance executor) warmUp(te test, ta target) {
+	time.Sleep(100 * time.Millisecond)
 	for i := 0; i < 10; i++ {
 		wg := new(sync.WaitGroup)
 		for j := uint16(0); j < instance.numberOfParallelExecutions; j++ {
@@ -101,7 +102,6 @@ func (instance executor) executeFor(te test, ta target, result *executionResult)
 	done := uint32(0)
 	time.AfterFunc(instance.executionTime, func() {
 		atomic.StoreUint32(&done, 1)
-		//cancelFunc()
 	})
 
 	debug := log.IsDebugEnabled()
