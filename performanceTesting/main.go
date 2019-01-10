@@ -1,16 +1,44 @@
 package main
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"github.com/echocat/goxr/common"
 	"github.com/echocat/goxr/log"
+	"github.com/shirou/gopsutil/cpu"
 	"github.com/urfave/cli"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var (
+	cpuCores       int
+	cpuInfos       []cpu.InfoStat
+	cpuInfosString string
+)
+
+func init() {
+	var err error
+	cpuCores, err = cpu.Counts(true)
+	must(err)
+	cpuInfos, err = cpu.Info()
+	must(err)
+	buf := new(bytes.Buffer)
+	for i, cpuInfo := range cpuInfos {
+		if i != 0 {
+			common.MustWritef(buf, "|")
+		}
+		common.MustWritef(buf, "%d#%s",
+			cpuInfo.CPU,
+			cpuInfo.ModelName,
+		)
+	}
+	cpuInfosString = buf.String()
+}
 
 func main() {
 	defer func() {
@@ -51,7 +79,27 @@ func main() {
 		e := createExecutor()
 
 		cw := csv.NewWriter(os.Stdout)
-		must(cw.Write([]string{"process", "test", "fileSize(b)", "runners", "executionTime(ns)", "executions", "ops/s", "totalDuration(ns)", "minDuration(ns)", "avgDuration(ns)", "maxDuration(ns)", "failures", "errors", "url"}))
+		must(cw.Write([]string{
+			"time",
+			"os",
+			"arch",
+			"cpu",
+			"cpuCores",
+			"process",
+			"test",
+			"fileSize(b)",
+			"runners",
+			"executionTime(ns)",
+			"executions",
+			"ops/s",
+			"totalDuration(ns)",
+			"minDuration(ns)",
+			"avgDuration(ns)",
+			"maxDuration(ns)",
+			"failures",
+			"errors",
+			"url",
+		}))
 		cw.Flush()
 
 		runProcesses(e, cw)
@@ -105,7 +153,11 @@ func runTest(e executor, ta target, te test, cw *csv.Writer) {
 		Infof("    Run test %s for for %s... DONE!", te.name(), ta.name())
 
 	must(cw.Write([]string{
-		ta.name(),
+		time.Now().Format(time.RFC3339),
+		runtime.GOOS,
+		runtime.GOARCH,
+		cpuInfosString,
+		strconv.FormatInt(int64(cpuCores), 10),
 		te.name(),
 		strconv.FormatUint(uint64(te.getSize()), 10),
 		strconv.FormatUint(uint64(e.numberOfParallelExecutions), 10),
