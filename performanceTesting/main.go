@@ -158,6 +158,7 @@ func runTest(e executor, ta target, te test, cw *csv.Writer) {
 		runtime.GOARCH,
 		cpuInfosString,
 		strconv.FormatInt(int64(cpuCores), 10),
+		ta.name(),
 		te.name(),
 		strconv.FormatUint(uint64(te.getSize()), 10),
 		strconv.FormatUint(uint64(e.numberOfParallelExecutions), 10),
