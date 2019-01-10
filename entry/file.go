@@ -17,7 +17,7 @@ type File struct {
 
 func (instance *File) Close() error {
 	if instance.closed {
-		return common.NewPathError("close", instance.Path, common.ErrAlreadyClosed)
+		return common.NewPathError("close", instance.Path, os.ErrClosed)
 	}
 
 	instance.closed = true
@@ -26,7 +26,7 @@ func (instance *File) Close() error {
 
 func (instance *File) ensureReader(operation string) (Reader, error) {
 	if instance.closed {
-		return nil, common.NewPathError(operation, instance.Path, common.ErrAlreadyClosed)
+		return nil, common.NewPathError(operation, instance.Path, os.ErrClosed)
 	}
 	if instance.entryReader == nil {
 		factory := instance.ReaderFactory

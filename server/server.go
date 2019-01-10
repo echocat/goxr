@@ -11,14 +11,23 @@ import (
 	"net/http"
 	"os"
 	sPath "path"
+	"sync/atomic"
 	"time"
+	"unsafe"
 )
+
+func NewServer(box goxr.Box) *Server {
+	return &Server{
+		Box: box,
+	}
+}
 
 type Server struct {
 	Box           goxr.Box
 	Configuration configuration.Configuration
 
-	Logger log.Logger
+	Logger  log.Logger
+	running unsafe.Pointer
 }
 
 func (instance *Server) Run() error {
@@ -28,12 +37,28 @@ func (instance *Server) Run() error {
 		s := &fasthttp.Server{
 			Handler:               instance.handle,
 			NoDefaultServerHeader: true,
+			Logger:                fasthttpLogger{instance.Log()},
 		}
 		if instance.Configuration.Response.GetGzip() {
 			s.Handler = fasthttp.CompressHandler(s.Handler)
 		}
+		if !atomic.CompareAndSwapPointer(&instance.running, nil, unsafe.Pointer(s)) {
+			return common.ErrAlreadyRunning
+		}
+		defer func() {
+			atomic.CompareAndSwapPointer(&instance.running, unsafe.Pointer(s), nil)
+		}()
 		return s.ListenAndServe(instance.Configuration.Listen.GetHttpAddress())
 	}
+}
+
+func (instance *Server) Shutdown() error {
+	vs := atomic.LoadPointer(&instance.running)
+	if vs == nil {
+		return nil
+	}
+	s := (*fasthttp.Server)(vs)
+	return s.Shutdown()
 }
 
 func (instance *Server) Validate() error {

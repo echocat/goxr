@@ -116,6 +116,9 @@ func (instance *Paths) Validate(using goxr.Box) (errors []error) {
 func (instance *Paths) validateIndex(using goxr.Box) (errors []error) {
 	r := instance.Index
 	if r != nil {
+		if *r == "" {
+			return
+		}
 		if _, err := using.Info(*r); os.IsNotExist(err) {
 			errors = append(errors, fmt.Errorf(`paths.index = "%s" - path does not exist in box`, *r))
 		} else if err != nil {

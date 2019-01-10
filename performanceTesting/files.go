@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 	"github.com/c2h5oh/datasize"
+	"github.com/echocat/goxr/log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var (
 	staticFileIndexHtml = staticFileBy("index.html")
-	staticFiles         = files{
+	staticFiles         = fileSlice{
 		staticFileIndexHtml,
 	}
 	baseFilenameToStaticFile = func(ins []file) map[string]staticFile {
@@ -21,14 +23,12 @@ var (
 		}
 		return result
 	}(staticFiles)
+	files = append(staticFiles, temporaryFileBy(1*datasize.MB))
 )
 
 type file interface {
 	fmt.Stringer
-	getPath() string
-	isTemporary() bool
-	getSize() datasize.ByteSize
-	ensure()
+	test
 }
 
 func staticFileBy(baseFileName string) staticFile {
@@ -46,19 +46,19 @@ type staticFile struct {
 	fileInfo     os.FileInfo
 }
 
-func (instance staticFile) String() string {
+func (instance staticFile) name() string {
 	return instance.baseFileName
 }
 
+func (instance staticFile) String() string {
+	return instance.name()
+}
+
 func (instance staticFile) getPath() string {
-	return instance.path
+	return filepath.Base(instance.path)
 }
 
-func (instance staticFile) isTemporary() bool {
-	return false
-}
-
-func (instance staticFile) ensure() {}
+func (instance staticFile) prepare() {}
 
 func (instance staticFile) getSize() datasize.ByteSize {
 	return datasize.ByteSize(instance.fileInfo.Size())
@@ -78,23 +78,23 @@ type temporaryFile struct {
 	size datasize.ByteSize
 }
 
-func (instance temporaryFile) String() string {
+func (instance temporaryFile) name() string {
 	return instance.size.String()
 }
 
-func (instance temporaryFile) getPath() string {
-	return instance.path
+func (instance temporaryFile) String() string {
+	return instance.name()
 }
 
-func (instance temporaryFile) isTemporary() bool {
-	return true
+func (instance temporaryFile) getPath() string {
+	return filepath.Base(instance.path)
 }
 
 func (instance temporaryFile) getSize() datasize.ByteSize {
 	return instance.size
 }
 
-func (instance temporaryFile) ensure() {
+func (instance temporaryFile) prepare() {
 	if fi, err := os.Stat(instance.path); os.IsNotExist(err) {
 		generateFile(instance.path, instance.size)
 	} else if err != nil {
@@ -107,21 +107,17 @@ func (instance temporaryFile) ensure() {
 	}
 }
 
-type files []file
+type fileSlice []file
 
-func (instance files) String() string {
+func (instance fileSlice) String() string {
 	return strings.Join(instance.Strings(), ",")
 }
 
-func (instance files) Get() interface{} {
+func (instance fileSlice) Get() interface{} {
 	return &instance
 }
 
-func (instance files) MarshalText() ([]byte, error) {
-	return []byte(instance.String()), nil
-}
-
-func (instance files) Strings() []string {
+func (instance fileSlice) Strings() []string {
 	result := make([]string, len(instance))
 	for i, bs := range instance {
 		result[i] = bs.String()
@@ -129,8 +125,8 @@ func (instance files) Strings() []string {
 	return result
 }
 
-func (instance *files) Set(plain string) error {
-	var result files
+func (instance *fileSlice) Set(plain string) error {
+	var result fileSlice
 	for _, str := range strings.Split(plain, ",") {
 		str = strings.TrimSpace(str)
 		if str != "" {
@@ -148,12 +144,14 @@ func (instance *files) Set(plain string) error {
 	return nil
 }
 
-func (instance *files) UnmarshalText(t []byte) error {
-	return instance.Set(string(t))
-}
-
-func (instance files) ensure() {
+func (instance fileSlice) prepare() {
+	log.Info("Prepare files...")
+	start := time.Now()
 	for _, file := range instance {
-		file.ensure()
+		file.prepare()
 	}
+	d := time.Now().Sub(start)
+	log.
+		WithField("duration", d).
+		Info("Prepare files... DONE!")
 }

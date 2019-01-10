@@ -41,3 +41,11 @@ func reportNotHandableProblem(err error, ctx *fasthttp.RequestCtx, logger log.Lo
 		WithError(err).
 		Warn()
 }
+
+type fasthttpLogger struct {
+	delegate log.Logger
+}
+
+func (instance fasthttpLogger) Printf(format string, args ...interface{}) {
+	instance.delegate.Warnf(format, args...)
+}

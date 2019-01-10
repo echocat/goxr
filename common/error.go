@@ -2,13 +2,15 @@ package common
 
 import (
 	"errors"
+	"net"
+	"net/url"
 	"os"
 )
 
 var (
-	ErrAlreadyClosed     = errors.New("already closed")
 	ErrDoesContainBox    = errors.New("does contain box")
 	ErrDoesNotContainBox = errors.New("does not contain box")
+	ErrAlreadyRunning    = errors.New("already running")
 )
 
 func NewPathError(operation string, path string, detail error) *os.PathError {
@@ -27,6 +29,10 @@ func UnderlyingError(err error) error {
 		case *os.LinkError:
 			err = candidate.Err
 		case *os.SyscallError:
+			err = candidate.Err
+		case *url.Error:
+			err = candidate.Err
+		case *net.OpError:
 			err = candidate.Err
 		default:
 			return err

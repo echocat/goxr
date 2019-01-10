@@ -6,8 +6,10 @@ import (
 	"github.com/echocat/goxr/common"
 	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 var (
@@ -16,24 +18,20 @@ var (
 		must(err)
 		return result
 	}()
-	workingDirectory = func() string {
-		result, err := os.Getwd()
-		must(err)
-		return result
-	}()
-	rootDirectory, filesDirectory = func(executable, workingDirectory string) (rootDirectory string, filesDirectory string) {
+	rootDirectory, filesDirectory = func(executable string) (rootDirectory string, filesDirectory string) {
 		rootDirectory = filepath.Dir(executable)
 		filesDirectory = filepath.Join(rootDirectory, "files")
 		if isDirectory(filesDirectory) {
 			return
 		}
-		rootDirectory = workingDirectory
+		_, sourceFile, _, _ := runtime.Caller(0)
+		rootDirectory = filepath.Dir(sourceFile)
 		filesDirectory = filepath.Join(rootDirectory, "files")
 		if isDirectory(filesDirectory) {
 			return
 		}
-		panic(fmt.Sprintf("files directory neither exists in %s nor %s", filepath.Dir(executable), workingDirectory))
-	}(executable, workingDirectory)
+		panic(fmt.Sprintf("files directory neither exists in %s nor %s", filepath.Dir(executable), filepath.Dir(sourceFile)))
+	}(executable)
 )
 
 func generateFile(target string, size datasize.ByteSize) {
@@ -107,5 +105,26 @@ func close(closer io.Closer) {
 func must(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func isTemporary(err error) bool {
+	if tErr, ok := err.(temporary); ok && tErr.Temporary() {
+		return true
+	}
+	return isTemporaryX(err)
+}
+
+type temporary interface {
+	Temporary() bool
+}
+
+type closeIdleTransport interface {
+	CloseIdleConnections()
+}
+
+func closeIdleConnections(of http.RoundTripper) {
+	if cit, ok := of.(closeIdleTransport); ok {
+		cit.CloseIdleConnections()
 	}
 }

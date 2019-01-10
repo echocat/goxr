@@ -5,3 +5,8 @@
 /god.sum
 /dist
 /performanceTesting/files/blob-*
+/performanceTesting/var
+!/performanceTesting/var/.gitignore
+/performanceTesting/logs
+!/performanceTesting/logs/.gitignore
+
