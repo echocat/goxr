@@ -18,7 +18,8 @@ type Server struct {
 	Box           goxr.Box
 	Configuration configuration.Configuration
 
-	Logger log.Logger
+	Logger      log.Logger
+	Interceptor Interceptor
 }
 
 func (instance *Server) Run() error {
@@ -26,7 +27,7 @@ func (instance *Server) Run() error {
 		return err
 	} else {
 		s := &fasthttp.Server{
-			Handler:               instance.handle,
+			Handler:               instance.Handle,
 			NoDefaultServerHeader: true,
 		}
 		if instance.Configuration.Response.GetGzip() {
@@ -43,7 +44,7 @@ func (instance *Server) Validate() error {
 	return instance.Configuration.ValidateAndSummarize(instance.Box)
 }
 
-func (instance *Server) handle(ctx *fasthttp.RequestCtx) {
+func (instance *Server) Handle(ctx *fasthttp.RequestCtx) {
 	if instance.Configuration.Logging.GetAccessLog() {
 		start := time.Now()
 		defer func(start time.Time) {
@@ -60,12 +61,17 @@ func (instance *Server) handle(ctx *fasthttp.RequestCtx) {
 			})
 		}(start)
 	}
-	path := instance.resolveInitialTargetPath(ctx)
-	instance.writeGenericHeaders(ctx)
-	instance.serveFile(path, ctx, true)
+	handled, newCtx := instance.onBeforeHandle(ctx)
+	defer instance.onAfterHandle(newCtx)
+
+	if !handled {
+		path := instance.ResolveInitialTargetPath(newCtx)
+		instance.WriteGenericHeaders(newCtx)
+		instance.ServeFile(path, newCtx, true, http.StatusOK)
+	}
 }
 
-func (instance *Server) resolveInitialTargetPath(ctx *fasthttp.RequestCtx) string {
+func (instance *Server) ResolveInitialTargetPath(ctx *fasthttp.RequestCtx) string {
 	result := string(ctx.Path())
 	if result == "/" || result == "" {
 		index := instance.Configuration.Paths.GetIndex()
@@ -76,9 +82,12 @@ func (instance *Server) resolveInitialTargetPath(ctx *fasthttp.RequestCtx) strin
 	return result
 }
 
-func (instance *Server) serveFile(path string, ctx *fasthttp.RequestCtx, interceptAllowed bool) {
+func (instance *Server) ServeFile(path string, ctx *fasthttp.RequestCtx, interceptAllowed bool, statusCode int) {
+	if statusCode <= 0 {
+		statusCode = http.StatusOK
+	}
 	if f, err := instance.Box.Open(path); err != nil {
-		instance.handleError(err, ctx)
+		instance.HandleError(err, ctx)
 	} else {
 		success := false
 		defer func() {
@@ -88,42 +97,46 @@ func (instance *Server) serveFile(path string, ctx *fasthttp.RequestCtx, interce
 		}()
 
 		if fi, err := f.Stat(); err != nil {
-			instance.handleError(err, ctx)
+			instance.HandleError(err, ctx)
 		} else if fi.IsDir() {
-			instance.handleError(os.ErrNotExist, ctx)
-		} else if !instance.doesETagMatched(fi, ctx) &&
-			!instance.doesModifiedMatched(fi, ctx) &&
-			!(interceptAllowed && instance.shouldHandleStatusCode(http.StatusOK, ctx)) {
-			instance.writeFileHeadersFor(fi, ctx)
-			ctx.Response.SetStatusCode(http.StatusOK)
+			instance.HandleError(os.ErrNotExist, ctx)
+		} else if !instance.DoesETagMatched(fi, ctx) &&
+			!instance.DoesModifiedMatched(fi, ctx) &&
+			!(interceptAllowed && instance.ShouldHandleStatusCode(statusCode, ctx)) {
+			instance.WriteFileHeadersFor(fi, ctx)
+			ctx.Response.SetStatusCode(statusCode)
 			ctx.Response.SetBodyStream(f, int(fi.Size()))
 			success = true
 		}
 	}
 }
 
-func (instance *Server) handleError(err error, ctx *fasthttp.RequestCtx) {
-	code := instance.statusCodeFor(err)
-	if instance.shouldHandleStatusCode(code, ctx) {
+func (instance *Server) HandleError(err error, ctx *fasthttp.RequestCtx) {
+	handled, newCtx := instance.onHandleError(err, ctx)
+	if handled {
 		return
 	}
+	code := instance.StatusCodeFor(err)
 	if code == http.StatusNotFound {
 		if target := instance.Configuration.Paths.Catchall.GetTarget(); target != "" {
-			if yes, err := instance.Configuration.Paths.Catchall.IsEligible(string(ctx.Path())); err != nil {
-				reportNotHandableProblem(err, ctx, instance.Log())
+			if yes, err := instance.Configuration.Paths.Catchall.IsEligible(string(newCtx.Path())); err != nil {
+				ReportNotHandableProblem(err, newCtx, instance.Log())
 			} else if yes {
-				instance.serveFile(target, ctx, false)
+				instance.ServeFile(target, newCtx, false, http.StatusOK)
 				return
 			}
 		}
 	}
+	if instance.ShouldHandleStatusCode(code, newCtx) {
+		return
+	}
 	(JsonResponse{
 		Code: code,
-		Path: string(ctx.Path()),
-	}).Serve(ctx, instance.Log())
+		Path: string(newCtx.Path()),
+	}).Serve(newCtx, instance.Log())
 }
 
-func (instance *Server) statusCodeFor(err error) int {
+func (instance *Server) StatusCodeFor(err error) int {
 	if os.IsNotExist(err) {
 		return 404
 	}
@@ -133,15 +146,15 @@ func (instance *Server) statusCodeFor(err error) int {
 	return http.StatusInternalServerError
 }
 
-func (instance *Server) notModifiedFor(fi os.FileInfo, ctx *fasthttp.RequestCtx) {
-	if instance.shouldHandleStatusCode(http.StatusNotModified, ctx) {
+func (instance *Server) NotModifiedFor(fi os.FileInfo, ctx *fasthttp.RequestCtx) {
+	if instance.ShouldHandleStatusCode(http.StatusNotModified, ctx) {
 		return
 	}
-	instance.writeFileHeadersFor(fi, ctx)
+	instance.WriteFileHeadersFor(fi, ctx)
 	ctx.SetStatusCode(http.StatusNotModified)
 }
 
-func (instance *Server) writeGenericHeaders(ctx *fasthttp.RequestCtx) {
+func (instance *Server) WriteGenericHeaders(ctx *fasthttp.RequestCtx) {
 	for name, values := range instance.Configuration.Response.GetHeaders() {
 		for i, value := range values {
 			if i == 0 {
@@ -153,46 +166,52 @@ func (instance *Server) writeGenericHeaders(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-func (instance *Server) writeFileHeadersFor(fi os.FileInfo, ctx *fasthttp.RequestCtx) {
-	if efi, ok := fi.(common.ExtendedFileInfo); ok {
+func (instance *Server) WriteFileHeadersFor(fi os.FileInfo, ctx *fasthttp.RequestCtx) {
+	if efi, ok := fi.(common.ExtendedFileInfo); ok && instance.Configuration.Response.GetWithEtag() {
 		ctx.Response.Header.Set("Etag", fmt.Sprintf(`"%s"`, efi.ChecksumString()))
 	}
-	ctx.Response.Header.Set("Last-Modified", fi.ModTime().Truncate(time.Second).UTC().Format(time.RFC1123))
-	typ := mime.TypeByExtension(sPath.Ext(fi.Name()))
-	if typ != "" {
+	if instance.Configuration.Response.GetWithLastModified() {
+		ctx.Response.Header.Set("Last-Modified", fi.ModTime().Truncate(time.Second).UTC().Format(time.RFC1123))
+	}
+	if typ := mime.TypeByExtension(sPath.Ext(fi.Name())); typ != "" && instance.Configuration.Response.GetWithContentType() {
 		ctx.Response.Header.SetContentType(typ)
 	}
 }
 
-func (instance *Server) doesETagMatched(fi os.FileInfo, ctx *fasthttp.RequestCtx) bool {
+func (instance *Server) DoesETagMatched(fi os.FileInfo, ctx *fasthttp.RequestCtx) bool {
+	if !instance.Configuration.Response.GetWithEtag() {
+		return false
+	}
 	ifNonMatch := string(ctx.Request.Header.Peek("If-None-Match"))
 	if efi, ok := fi.(common.ExtendedFileInfo); ok && ifNonMatch == fmt.Sprintf(`"%s"`, efi.ChecksumString()) {
-		instance.notModifiedFor(fi, ctx)
+		instance.NotModifiedFor(fi, ctx)
 		return true
 	}
 	return false
 }
 
-func (instance *Server) doesModifiedMatched(fi os.FileInfo, ctx *fasthttp.RequestCtx) bool {
-	ifModifiedSince := string(ctx.Request.Header.Peek("If-Modified-Since"))
-	if ifModifiedSince != "" {
+func (instance *Server) DoesModifiedMatched(fi os.FileInfo, ctx *fasthttp.RequestCtx) bool {
+	if !instance.Configuration.Response.GetWithLastModified() {
+		return false
+	}
+	if ifModifiedSince := string(ctx.Request.Header.Peek("If-Modified-Since")); ifModifiedSince != "" {
 		if tIfModifiedSince, err := time.Parse(time.RFC1123, ifModifiedSince); err != nil {
 			// Ignored
 		} else if tIfModifiedSince.Truncate(time.Second).Equal(fi.ModTime().Truncate(time.Second)) {
-			instance.notModifiedFor(fi, ctx)
+			instance.NotModifiedFor(fi, ctx)
 			return true
 		}
 	}
 	return false
 }
 
-func (instance *Server) shouldHandleStatusCode(code int, ctx *fasthttp.RequestCtx) bool {
+func (instance *Server) ShouldHandleStatusCode(code int, ctx *fasthttp.RequestCtx) bool {
 	if code <= 0 {
 		return false
 	}
 	statusCodePath := instance.Configuration.Paths.FindStatusCode(code)
 	if statusCodePath != "" {
-		instance.serveFile(statusCodePath, ctx, false)
+		instance.ServeFile(statusCodePath, ctx, false, code)
 		return true
 	}
 	return false
@@ -219,4 +238,24 @@ func (instance *Server) configureMimeTypes() error {
 		}
 	}
 	return nil
+}
+
+func (instance *Server) onBeforeHandle(ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx) {
+	if i := instance.Interceptor; i != nil {
+		return i.OnBeforeHandle(ctx)
+	}
+	return false, ctx
+}
+
+func (instance *Server) onAfterHandle(ctx *fasthttp.RequestCtx) {
+	if i := instance.Interceptor; i != nil {
+		i.OnAfterHandle(ctx)
+	}
+}
+
+func (instance *Server) onHandleError(err error, ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx) {
+	if i := instance.Interceptor; i != nil {
+		return i.OnHandleError(err, ctx)
+	}
+	return false, ctx
 }

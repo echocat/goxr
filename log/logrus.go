@@ -41,6 +41,13 @@ func (instance LogrusFormat) String() string {
 	return string(instance)
 }
 
+func (instance *LogrusFormat) Equals(o Format) bool {
+	if lil, ok := o.(*LogrusFormat); ok {
+		return lil == instance
+	}
+	return false
+}
+
 type LogrusColorMode string
 
 func (instance *LogrusColorMode) Set(plain string) error {
@@ -175,6 +182,18 @@ func (instance *LogrusLogger) SetLevel(l Level) error {
 	}
 	return os.ErrInvalid
 }
+func (instance *LogrusLogger) GetFormat() Format {
+	return &instance.Format
+}
+
+func (instance *LogrusLogger) SetFormat(l Format) error {
+	if lgl, ok := l.(*LogrusFormat); ok {
+		instance.Format = *lgl
+		instance.Delegate.Formatter = instance.formatter()
+		return nil
+	}
+	return os.ErrInvalid
+}
 
 func (instance *LogrusLogger) Flags() []cli.Flag {
 	return []cli.Flag{
@@ -204,24 +223,35 @@ func (instance *LogrusLogger) Flags() []cli.Flag {
 func (instance *LogrusLogger) Init() error {
 	instance.Delegate.Level = instance.Level.Level
 	instance.Delegate.ReportCaller = instance.ReportCaller
+	instance.Delegate.Formatter = instance.formatter()
+	return nil
+}
 
+func (instance *LogrusLogger) formatter() logrus.Formatter {
+	switch instance.Format {
+	case "json":
+		return instance.jsonFormatter()
+	default:
+		return instance.textFormatter()
+	}
+}
+
+func (instance *LogrusLogger) textFormatter() *logrus.TextFormatter {
 	textFormatter := &logrus.TextFormatter{
 		FullTimestamp:    true,
 		QuoteEmptyFields: true,
 	}
 	switch instance.ColorMode {
-	case LogrusColorMode("always"):
+	case "always":
 		textFormatter.ForceColors = true
-	case LogrusColorMode("never"):
+	case "never":
 		textFormatter.DisableColors = true
 	}
+	return textFormatter
+}
 
-	instance.Delegate.Formatter = textFormatter
-	switch instance.Format {
-	case LogrusFormat("json"):
-		instance.Delegate.Formatter = &logrus.JSONFormatter{}
-	}
-	return nil
+func (instance *LogrusLogger) jsonFormatter() *logrus.JSONFormatter {
+	return &logrus.JSONFormatter{}
 }
 
 type LogrusEntry struct {

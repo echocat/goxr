@@ -2,9 +2,17 @@ paths:
   index: /index.html
   catchall:
     target: /index.html
+    excludes:
+      - /robots\.txt
+      - /favicon\.ico
+      - /foo/.*
+  statusCodes:
+    401: /index.html
 response:
   gzip: true
   headers:
     "X-foo":
       - "bar1"
       - "bar2"
+logging:
+  format: json

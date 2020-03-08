@@ -10,8 +10,8 @@ import (
 
 var DefaultLogger RootLogger = &LogrusLogger{
 	Level:     &LogrusLevel{logrus.InfoLevel},
-	Format:    LogrusFormat("text"),
-	ColorMode: LogrusColorMode("auto"),
+	Format:    "text",
+	ColorMode: "auto",
 	Delegate:  logrus.New(),
 }
 
@@ -50,6 +50,8 @@ type RootLogger interface {
 	Flags() []cli.Flag
 	GetLevel() Level
 	SetLevel(Level) error
+	GetFormat() Format
+	SetFormat(Format) error
 }
 
 func WithField(key string, value interface{}) Logger {
@@ -148,6 +150,14 @@ func SetLevel(l Level) error {
 	return DefaultLogger.SetLevel(l)
 }
 
+func GetFormat() Format {
+	return DefaultLogger.GetFormat()
+}
+
+func SetFormat(f Format) error {
+	return DefaultLogger.SetFormat(f)
+}
+
 type JsonValue struct {
 	Value       interface{}
 	PrettyPrint bool
@@ -179,4 +189,9 @@ func OrDefault(in Logger) Logger {
 type Level interface {
 	flag.Value
 	Equals(Level) bool
+}
+
+type Format interface {
+	flag.Value
+	Equals(Format) bool
 }

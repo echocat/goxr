@@ -3,22 +3,20 @@ package main
 import (
 	"github.com/echocat/goxr"
 	"github.com/echocat/goxr/common"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"os"
 	"testing"
 )
 
 func DisabledTestMoo(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	box, err := goxr.OpenBox("../common", "../log")
-	g.Expect(err).To(BeNil())
-	g.Expect(box).NotTo(BeNil())
+	assert.NoError(t, err)
+	assert.NotNil(t, box)
 
 	f, err := os.Create("../resources/testBase2/moo2.bin")
-	g.Expect(err).To(BeNil())
-	g.Expect(f).NotTo(BeNil())
+	assert.NoError(t, err)
+	assert.NotNil(t, f)
 	//noinspection GoUnhandledErrorResult
 	defer f.Close()
 

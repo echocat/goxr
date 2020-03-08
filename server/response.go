@@ -19,7 +19,7 @@ type JsonResponse struct {
 
 func (instance JsonResponse) Serve(ctx *fasthttp.RequestCtx, logger log.Logger) {
 	t := instance
-	if !bodyAllowedForStatus(t.Code) {
+	if !BodyAllowedForStatus(t.Code) {
 		t.Code = 200
 	}
 	t = t.Complete(ctx)
@@ -32,7 +32,7 @@ func (instance JsonResponse) Serve(ctx *fasthttp.RequestCtx, logger log.Logger) 
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "  ")
 		if err := encoder.Encode(t); err != nil {
-			reportNotHandableProblem(err, ctx, logger)
+			ReportNotHandableProblem(err, ctx, logger)
 		}
 	})
 }

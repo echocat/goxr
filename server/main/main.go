@@ -17,6 +17,7 @@ var (
 	srv         = &server.Server{}
 	httpAddress = &fixedString{def: ":8080"}
 	logLevel    = &fixedLogLevel{}
+	logFormat   = &fixedLogFormat{}
 )
 
 func init() {
@@ -30,6 +31,8 @@ func init() {
 	} else if c, err := configuration.OfBox(b); err != nil {
 		fail(127, err)
 	} else if err := log.SetLevel(c.Logging.GetLevel()); err != nil {
+		fail(127, err)
+	} else if err := log.SetFormat(c.Logging.GetFormat()); err != nil {
 		fail(127, err)
 	} else {
 		srv.Box = b
@@ -97,6 +100,9 @@ func main() {
 		if err := log.SetLevel(logLevel.evaluate(srv.Configuration.Logging.GetLevel())); err != nil {
 			return err
 		}
+		if err := log.SetFormat(logFormat.evaluate(srv.Configuration.Logging.GetFormat())); err != nil {
+			return err
+		}
 		srv.Configuration.Listen.HttpAddress = httpAddress.evaluate(srv.Configuration.Listen.HttpAddress)
 		return nil
 	}
@@ -159,6 +165,39 @@ func (instance fixedLogLevel) evaluate(fromConfig log.Level) log.Level {
 		return fromConfig
 	}
 	return log.GetLevel()
+}
+
+type fixedLogFormat struct {
+	value log.Format
+}
+
+func (instance *fixedLogFormat) Set(plain string) error {
+	if plain == "" {
+		instance.value = nil
+		return nil
+	}
+	if instance.value == nil {
+		instance.value = log.GetFormat()
+	}
+	return instance.value.Set(plain)
+}
+
+func (instance fixedLogFormat) String() string {
+	if instance.value == nil {
+		return ""
+	}
+	return instance.value.String()
+}
+
+func (instance fixedLogFormat) evaluate(fromConfig log.Format) log.Format {
+	v := instance.value
+	if v != nil {
+		return v
+	}
+	if fromConfig != nil {
+		return fromConfig
+	}
+	return log.GetFormat()
 }
 
 type fixedString struct {

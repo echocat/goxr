@@ -2,7 +2,7 @@ package packed
 
 import (
 	"github.com/echocat/goxr/common"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
@@ -18,40 +18,39 @@ func Test_Truncate(t *testing.T) {
 
 	addCase := func(name string, expectedVersion *Version, expectedTocOffset common.FileOffset, expectedSize int, inArgs ...interface{}) {
 		t.Run(name, func(t *testing.T) {
-			g := NewGomegaWithT(t)
 			fn := tempFileWithBytesOf(inArgs...)
 			defer deletePathForT(fn, t)
 			{
 				f, err := os.Open(fn)
-				g.Expect(err).To(BeNil())
-				g.Expect(f).ToNot(BeNil())
+				assert.NoError(t, err)
+				assert.NotNil(t, f)
 				defer closeForT(f, t)
 				header, err := FindHeader(f)
-				g.Expect(err).To(BeNil())
+				assert.NoError(t, err)
 				if expectedVersion == nil {
-					g.Expect(header).To(BeNil())
+					assert.Nil(t, header)
 				} else {
-					g.Expect(header).ToNot(BeNil())
-					g.Expect(header.Version).To(Equal(*expectedVersion))
-					g.Expect(header.TocOffset).To(Equal(expectedTocOffset))
+					assert.NotNil(t, header)
+					assert.Equal(t, *expectedVersion, header.Version)
+					assert.Equal(t, expectedTocOffset, header.TocOffset)
 				}
 			}
 			{
 				err := Truncate(fn)
-				g.Expect(err).To(BeNil())
+				assert.NoError(t, err)
 			}
 			{
 				f, err := os.Open(fn)
-				g.Expect(err).To(BeNil())
-				g.Expect(f).ToNot(BeNil())
+				assert.NoError(t, err)
+				assert.NotNil(t, f)
 				defer closeForT(f, t)
 				header, err := FindHeader(f)
-				g.Expect(err).To(BeNil())
-				g.Expect(header).To(BeNil())
-				g.Expect(f.Close()).To(BeNil())
+				assert.NoError(t, err)
+				assert.NotNil(t, header)
+				assert.NoError(t, f.Close())
 			}
 			{
-				g.Expect(fileSizeForT(fn, t)).To(Equal(int64(expectedSize)))
+				assert.Equal(t, int64(expectedSize), fileSizeForT(fn, t))
 			}
 		})
 	}

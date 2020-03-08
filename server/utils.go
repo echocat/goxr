@@ -19,7 +19,7 @@ func (instance *httpFS) Open(path string) (http.File, error) {
 	return instance.Box.Open(path)
 }
 
-func bodyAllowedForStatus(status int) bool {
+func BodyAllowedForStatus(status int) bool {
 	switch {
 	case status >= 100 && status <= 199:
 		return false
@@ -31,7 +31,7 @@ func bodyAllowedForStatus(status int) bool {
 	return true
 }
 
-func reportNotHandableProblem(err error, ctx *fasthttp.RequestCtx, logger log.Logger) {
+func ReportNotHandableProblem(err error, ctx *fasthttp.RequestCtx, logger log.Logger) {
 	logger.
 		WithField("remote", ctx.RemoteAddr().String()).
 		WithField("local", ctx.LocalAddr().String()).

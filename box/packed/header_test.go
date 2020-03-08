@@ -3,7 +3,7 @@ package packed
 import (
 	"bytes"
 	"github.com/echocat/goxr/common"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -53,12 +53,10 @@ func Benchmark_FindHeader(b *testing.B) {
 
 	// run the Fib function b.N times
 	for n := 0; n < b.N; n++ {
-		g := NewGomegaWithT(b)
-
 		header, err := FindHeader(bytes.NewBuffer(in))
-		g.Expect(err).To(BeNil())
-		g.Expect(header.Version).To(Equal(version1))
-		g.Expect(header.TocOffset).To(Equal(offset))
+		assert.NoError(b, err)
+		assert.Equal(b, version1, header.Version)
+		assert.Equal(b, offset, header.TocOffset)
 	}
 }
 
@@ -74,15 +72,13 @@ func Test_FindHeader(t *testing.T) {
 	addCase := func(name string, expectedVersion *Version, expectedOffset common.FileOffset, inArgs ...interface{}) {
 		in := concatBytes(inArgs...)
 		t.Run(name, func(t *testing.T) {
-			g := NewGomegaWithT(t)
-
 			header, err := FindHeader(bytes.NewBuffer(in))
-			g.Expect(err).To(BeNil())
+			assert.NoError(t, err)
 			if expectedVersion == nil {
 			} else {
-				g.Expect(header).ToNot(BeNil())
-				g.Expect(header.Version).To(Equal(*expectedVersion))
-				g.Expect(header.TocOffset).To(Equal(expectedOffset))
+				assert.NotNil(t, header)
+				assert.Equal(t, *expectedVersion, header.Version)
+				assert.Equal(t, expectedOffset, header.TocOffset)
 			}
 		})
 	}

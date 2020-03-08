@@ -3,7 +3,7 @@ package packed
 import (
 	"fmt"
 	"github.com/echocat/goxr/common"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -18,23 +18,21 @@ var (
 
 func Test_writeGarbageBytes(t *testing.T) {
 	t.Run("works as expected", func(t *testing.T) {
-		g := NewGomegaWithT(t)
-
 		f, err := ioutil.TempFile("", "goxr.box.packed-writeGarbageBytes.*.bin")
 		defer deletePathForT(f.Name(), t)
 		defer closeForT(f, t)
-		g.Expect(err).To(BeNil())
-		g.Expect(f).ToNot(BeNil())
-		g.Expect(f.Sync()).To(BeNil())
+		assert.NoError(t, err)
+		assert.NotNil(t, f)
+		assert.NoError(t, f.Sync())
 		fi, err := f.Stat()
-		g.Expect(err).To(BeNil())
-		g.Expect(fi.Size()).To(Equal(int64(0)))
+		assert.NoError(t, err)
+		assert.Equal(t, int64(0), fi.Size())
 
 		writeGarbageBytes(garbage(6666), f)
-		g.Expect(f.Sync()).To(BeNil())
+		assert.NoError(t, f.Sync())
 		fi, err = f.Stat()
-		g.Expect(err).To(BeNil())
-		g.Expect(fi.Size()).To(Equal(int64(6666)))
+		assert.NoError(t, err)
+		assert.Equal(t, int64(6666), fi.Size())
 	})
 }
 

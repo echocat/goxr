@@ -6,8 +6,9 @@ import (
 )
 
 type Logging struct {
-	AccessLog *bool        `yaml:"accessLog,omitempty"`
-	Level     LoggingLevel `yaml:"level,omitempty"`
+	AccessLog *bool         `yaml:"accessLog,omitempty"`
+	Level     LoggingLevel  `yaml:"level,omitempty"`
+	Format    LoggingFormat `yaml:"format,omitempty"`
 }
 
 func (instance Logging) GetAccessLog() bool {
@@ -22,6 +23,14 @@ func (instance Logging) GetLevel() log.Level {
 	r := instance.Level
 	if r.v == nil {
 		return log.GetLevel()
+	}
+	return r.v
+}
+
+func (instance Logging) GetFormat() log.Format {
+	r := instance.Format
+	if r.v == nil {
+		return log.GetFormat()
 	}
 	return r.v
 }
@@ -48,6 +57,31 @@ func (instance *LoggingLevel) UnmarshalYAML(unmarshal func(interface{}) error) e
 }
 
 func (instance *LoggingLevel) MarshalYAML() (interface{}, error) {
+	level := instance.v
+	if level == nil {
+		return nil, nil
+	}
+	return level.String(), nil
+}
+
+type LoggingFormat struct {
+	v log.Format
+}
+
+func (instance *LoggingFormat) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var plain string
+	if err := unmarshal(&plain); err != nil {
+		return err
+	}
+	format := log.GetFormat()
+	if err := format.Set(plain); err != nil {
+		return err
+	}
+	instance.v = format
+	return nil
+}
+
+func (instance *LoggingFormat) MarshalYAML() (interface{}, error) {
 	level := instance.v
 	if level == nil {
 		return nil, nil
