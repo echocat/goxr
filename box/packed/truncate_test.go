@@ -46,7 +46,7 @@ func Test_Truncate(t *testing.T) {
 				defer closeForT(f, t)
 				header, err := FindHeader(f)
 				assert.NoError(t, err)
-				assert.NotNil(t, header)
+				assert.Nil(t, header)
 				assert.NoError(t, f.Close())
 			}
 			{
