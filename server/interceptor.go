@@ -6,5 +6,5 @@ type Interceptor interface {
 	OnBeforeHandle(ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx)
 	OnAfterHandle(ctx *fasthttp.RequestCtx)
 	OnTargetPathResolved(path string, ctx *fasthttp.RequestCtx) (newPath string)
-	OnHandleError(err error, ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx)
+	OnHandleError(err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx)
 }

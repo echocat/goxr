@@ -87,7 +87,7 @@ func (instance *Server) ServeFile(path string, ctx *fasthttp.RequestCtx, interce
 		statusCode = http.StatusOK
 	}
 	if f, err := instance.Box.Open(path); err != nil {
-		instance.HandleError(err, ctx)
+		instance.HandleError(err, interceptAllowed, ctx)
 	} else {
 		success := false
 		defer func() {
@@ -97,9 +97,9 @@ func (instance *Server) ServeFile(path string, ctx *fasthttp.RequestCtx, interce
 		}()
 
 		if fi, err := f.Stat(); err != nil {
-			instance.HandleError(err, ctx)
+			instance.HandleError(err, interceptAllowed, ctx)
 		} else if fi.IsDir() {
-			instance.HandleError(os.ErrNotExist, ctx)
+			instance.HandleError(os.ErrNotExist, interceptAllowed, ctx)
 		} else if !instance.DoesETagMatched(fi, ctx) &&
 			!instance.DoesModifiedMatched(fi, ctx) &&
 			!(interceptAllowed && instance.ShouldHandleStatusCode(statusCode, ctx)) {
@@ -111,16 +111,22 @@ func (instance *Server) ServeFile(path string, ctx *fasthttp.RequestCtx, interce
 	}
 }
 
-func (instance *Server) HandleError(err error, ctx *fasthttp.RequestCtx) {
-	handled, newCtx := instance.onHandleError(err, ctx)
+func (instance *Server) HandleError(err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) {
+	handled, newErr, newCtx := instance.onHandleError(err, interceptAllowed, ctx)
 	if handled {
 		return
 	}
-	code := instance.StatusCodeFor(err)
+	code := instance.StatusCodeFor(newErr)
+
+	if !interceptAllowed {
+		ctx.Response.SetStatusCode(code)
+		ReportNotHandableProblem(newErr, newCtx, instance.Log())
+	}
+
 	if code == http.StatusNotFound {
 		if target := instance.Configuration.Paths.Catchall.GetTarget(); target != "" {
-			if yes, err := instance.Configuration.Paths.Catchall.IsEligible(string(newCtx.Path())); err != nil {
-				ReportNotHandableProblem(err, newCtx, instance.Log())
+			if yes, eErr := instance.Configuration.Paths.Catchall.IsEligible(string(newCtx.Path())); eErr != nil {
+				ReportNotHandableProblem(eErr, newCtx, instance.Log())
 			} else if yes {
 				instance.ServeFile(target, newCtx, false, http.StatusOK)
 				return
@@ -260,9 +266,9 @@ func (instance *Server) onTargetPathResolved(path string, ctx *fasthttp.RequestC
 	return path
 }
 
-func (instance *Server) onHandleError(err error, ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx) {
+func (instance *Server) onHandleError(err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx) {
 	if i := instance.Interceptor; i != nil {
-		return i.OnHandleError(err, ctx)
+		return i.OnHandleError(err, interceptAllowed, ctx)
 	}
-	return false, ctx
+	return false, err, ctx
 }

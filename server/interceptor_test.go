@@ -44,7 +44,7 @@ func Test_Server_embedding_errors(t *testing.T) {
 	givenCtx := &fasthttp.RequestCtx{}
 	givenError := errors.New("foobar")
 
-	s.HandleError(givenError, givenCtx)
+	s.HandleError(givenError, true, givenCtx)
 
 	assert.Same(t, givenCtx, instance.onHandleErrorContext)
 	assert.Same(t, givenError, instance.onHandleErrorError)
@@ -79,11 +79,11 @@ func (instance *testInterceptor) OnTargetPathResolved(path string, ctx *fasthttp
 	panic("not implemented")
 }
 
-func (instance *testInterceptor) OnHandleError(err error, ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx) {
+func (instance *testInterceptor) OnHandleError(err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx) {
 	assert.NotNil(instance.t, err)
 	assert.NotNil(instance.t, ctx)
 
 	instance.onHandleErrorContext = ctx
 	instance.onHandleErrorError = err
-	return true, instance.onHandleErrorContext
+	return true, err, instance.onHandleErrorContext
 }
