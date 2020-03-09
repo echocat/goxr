@@ -79,7 +79,7 @@ func (instance *Server) ResolveInitialTargetPath(ctx *fasthttp.RequestCtx) strin
 			result = index
 		}
 	}
-	return result
+	return instance.onTargetPathResolved(result, ctx)
 }
 
 func (instance *Server) ServeFile(path string, ctx *fasthttp.RequestCtx, interceptAllowed bool, statusCode int) {
@@ -251,6 +251,13 @@ func (instance *Server) onAfterHandle(ctx *fasthttp.RequestCtx) {
 	if i := instance.Interceptor; i != nil {
 		i.OnAfterHandle(ctx)
 	}
+}
+
+func (instance *Server) onTargetPathResolved(path string, ctx *fasthttp.RequestCtx) (newPath string) {
+	if i := instance.Interceptor; i != nil {
+		return i.OnTargetPathResolved(path, ctx)
+	}
+	return path
 }
 
 func (instance *Server) onHandleError(err error, ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx) {

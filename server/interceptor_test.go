@@ -75,6 +75,10 @@ func (instance *testInterceptor) OnAfterHandle(ctx *fasthttp.RequestCtx) {
 	instance.onAfterHandleContext = ctx
 }
 
+func (instance *testInterceptor) OnTargetPathResolved(path string, ctx *fasthttp.RequestCtx) (newPath string) {
+	panic("not implemented")
+}
+
 func (instance *testInterceptor) OnHandleError(err error, ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx) {
 	assert.NotNil(instance.t, err)
 	assert.NotNil(instance.t, ctx)
