@@ -92,7 +92,6 @@ func NewApp() *cli.App {
 
 	result.HideHelp = true
 	result.HideVersion = true
-	result.Flags = append(result.Flags, log.DefaultLogger.Flags()...)
 	result.Flags = append(result.Flags, cli.HelpFlag)
 	result.Flags = append(result.Flags, cli.VersionFlag)
 	result.Flags = append(result.Flags, cliXpprofListenFlag)
@@ -103,9 +102,7 @@ func NewApp() *cli.App {
 	result.ErrWriter = os.Stderr
 
 	result.Before = func(ctx *cli.Context) error {
-		if err := log.DefaultLogger.Init(); err != nil {
-			return err
-		} else if CliHelpRequested {
+		if CliHelpRequested {
 			if err := cli.ShowAppHelp(ctx); err != nil {
 				return err
 			} else {

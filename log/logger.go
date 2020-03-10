@@ -3,16 +3,19 @@ package log
 import (
 	"bytes"
 	"encoding/json"
-	"flag"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
 )
 
-var DefaultLogger RootLogger = &LogrusLogger{
-	Level:     &LogrusLevel{logrus.InfoLevel},
-	Format:    "text",
-	ColorMode: "auto",
-	Delegate:  logrus.New(),
+var Default = NewDefault()
+
+func NewDefault() RootLogger {
+	instance := &LogrusLogger{
+		Delegate: logrus.New(),
+	}
+	if err := instance.SetConfiguration(Configuration{}); err != nil {
+		panic(err)
+	}
+	return instance
 }
 
 type Logger interface {
@@ -46,116 +49,96 @@ type Logger interface {
 type RootLogger interface {
 	Logger
 
-	Init() error
-	Flags() []cli.Flag
-	GetLevel() Level
-	SetLevel(Level) error
-	GetFormat() Format
-	SetFormat(Format) error
+	SetConfiguration(Configuration) error
+	GetConfiguration() Configuration
 }
 
 func WithField(key string, value interface{}) Logger {
-	return DefaultLogger.WithField(key, value)
+	return Default.WithField(key, value)
 }
 
 func WithDeepField(key string, value interface{}) Logger {
-	return DefaultLogger.WithDeepField(key, value)
+	return Default.WithDeepField(key, value)
 }
 
 func WithDeepFieldOn(key string, value interface{}, on func() bool) Logger {
-	return DefaultLogger.WithDeepFieldOn(key, value, on)
+	return Default.WithDeepFieldOn(key, value, on)
 }
 
 func WithError(err error) Logger {
-	return DefaultLogger.WithError(err)
+	return Default.WithError(err)
 }
 
 func Trace(what ...interface{}) {
-	DefaultLogger.Trace(what...)
+	Default.Trace(what...)
 }
 
 func Debug(what ...interface{}) {
-	DefaultLogger.Debug(what...)
+	Default.Debug(what...)
 }
 
 func Info(what ...interface{}) {
-	DefaultLogger.Info(what...)
+	Default.Info(what...)
 }
 
 func Warn(what ...interface{}) {
-	DefaultLogger.Warn(what...)
+	Default.Warn(what...)
 }
 
 func Error(what ...interface{}) {
-	DefaultLogger.Error(what...)
+	Default.Error(what...)
 }
 
 func Fatal(what ...interface{}) {
-	DefaultLogger.Fatal(what...)
+	Default.Fatal(what...)
 }
 
 func Tracef(msg string, args ...interface{}) {
-	DefaultLogger.Tracef(msg, args...)
+	Default.Tracef(msg, args...)
 }
 
 func Debugf(msg string, args ...interface{}) {
-	DefaultLogger.Debugf(msg, args...)
+	Default.Debugf(msg, args...)
 }
 
 func Infof(msg string, args ...interface{}) {
-	DefaultLogger.Infof(msg, args...)
+	Default.Infof(msg, args...)
 }
 
 func Warnf(msg string, args ...interface{}) {
-	DefaultLogger.Warnf(msg, args...)
+	Default.Warnf(msg, args...)
 }
 
 func Errorf(msg string, args ...interface{}) {
-	DefaultLogger.Errorf(msg, args...)
+	Default.Errorf(msg, args...)
 }
 
 func Fatalf(msg string, args ...interface{}) {
-	DefaultLogger.Fatalf(msg, args...)
+	Default.Fatalf(msg, args...)
 }
 
 func IsTraceEnabled() bool {
-	return DefaultLogger.IsTraceEnabled()
+	return Default.IsTraceEnabled()
 }
 
 func IsDebugEnabled() bool {
-	return DefaultLogger.IsDebugEnabled()
+	return Default.IsDebugEnabled()
 }
 
 func IsInfoEnabled() bool {
-	return DefaultLogger.IsInfoEnabled()
+	return Default.IsInfoEnabled()
 }
 
 func IsWarnEnabled() bool {
-	return DefaultLogger.IsWarnEnabled()
+	return Default.IsWarnEnabled()
 }
 
 func IsErrorEnabled() bool {
-	return DefaultLogger.IsErrorEnabled()
+	return Default.IsErrorEnabled()
 }
 
 func IsFatalEnabled() bool {
-	return DefaultLogger.IsFatalEnabled()
-}
-
-func GetLevel() Level {
-	return DefaultLogger.GetLevel()
-}
-
-func SetLevel(l Level) error {
-	return DefaultLogger.SetLevel(l)
-}
-
-func GetFormat() Format {
-	return DefaultLogger.GetFormat()
-}
-
-func SetFormat(f Format) error {
-	return DefaultLogger.SetFormat(f)
+	return Default.IsFatalEnabled()
 }
 
 type JsonValue struct {
@@ -181,17 +164,7 @@ type HasLogger interface {
 
 func OrDefault(in Logger) Logger {
 	if in == nil {
-		return DefaultLogger
+		return Default
 	}
 	return in
-}
-
-type Level interface {
-	flag.Value
-	Equals(Level) bool
-}
-
-type Format interface {
-	flag.Value
-	Equals(Format) bool
 }

@@ -3,70 +3,12 @@ package log
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
-	"os"
 	"reflect"
 )
 
-type LogrusLevel struct {
-	logrus.Level
-}
-
-func (instance *LogrusLevel) Set(plain string) error {
-	return instance.UnmarshalText([]byte(plain))
-}
-
-func (instance LogrusLevel) String() string {
-	return instance.Level.String()
-}
-
-func (instance *LogrusLevel) Equals(o Level) bool {
-	if lil, ok := o.(*LogrusLevel); ok {
-		return lil.Level == instance.Level
-	}
-	return false
-}
-
-type LogrusFormat string
-
-func (instance *LogrusFormat) Set(plain string) error {
-	if plain != "json" && plain != "text" {
-		return fmt.Errorf("unsupported log format: %s", plain)
-	}
-	*instance = LogrusFormat(plain)
-	return nil
-}
-
-func (instance LogrusFormat) String() string {
-	return string(instance)
-}
-
-func (instance *LogrusFormat) Equals(o Format) bool {
-	if lil, ok := o.(*LogrusFormat); ok {
-		return lil == instance
-	}
-	return false
-}
-
-type LogrusColorMode string
-
-func (instance *LogrusColorMode) Set(plain string) error {
-	if plain != "auto" && plain != "never" && plain != "always" {
-		return fmt.Errorf("unsupported log color mode: %s", plain)
-	}
-	*instance = LogrusColorMode(plain)
-	return nil
-}
-
-func (instance LogrusColorMode) String() string {
-	return string(instance)
-}
-
 type LogrusLogger struct {
-	Level              *LogrusLevel
-	Format             LogrusFormat
-	ColorMode          LogrusColorMode
-	ReportCaller       bool
+	configuration Configuration
+
 	Delegate           *logrus.Logger
 	EntryLoggerFactory func(*logrus.Logger) Logger
 }
@@ -168,90 +110,37 @@ func (instance *LogrusLogger) IsFatalEnabled() bool {
 	return instance.Delegate.Level >= logrus.FatalLevel
 }
 
-func (instance *LogrusLogger) GetLevel() Level {
-	return &LogrusLevel{
-		Level: instance.Delegate.Level,
+func (instance *LogrusLogger) SetConfiguration(configuration Configuration) error {
+	lvl, err := logrus.ParseLevel(configuration.GetLevel(InfoLevel).String())
+	if err != nil {
+		return err
 	}
-}
 
-func (instance *LogrusLogger) SetLevel(l Level) error {
-	if lgl, ok := l.(*LogrusLevel); ok {
-		instance.Level = lgl
-		instance.Delegate.Level = lgl.Level
-		return nil
+	var formatter logrus.Formatter
+	switch configuration.GetFormat(TextFormat) {
+	case JsonFormat:
+		formatter = &logrus.JSONFormatter{}
+	default:
+		formatter = &logrus.TextFormatter{
+			FullTimestamp:    true,
+			QuoteEmptyFields: true,
+		}
+		switch configuration.GetColorMode(AutoColorMode) {
+		case AlwaysColorMode:
+			formatter.(*logrus.TextFormatter).ForceColors = true
+		case NeverColorMode:
+			formatter.(*logrus.TextFormatter).DisableColors = true
+		}
 	}
-	return os.ErrInvalid
-}
-func (instance *LogrusLogger) GetFormat() Format {
-	return &instance.Format
-}
 
-func (instance *LogrusLogger) SetFormat(l Format) error {
-	if lgl, ok := l.(*LogrusFormat); ok {
-		instance.Format = *lgl
-		instance.Delegate.Formatter = instance.formatter()
-		return nil
-	}
-	return os.ErrInvalid
-}
-
-func (instance *LogrusLogger) Flags() []cli.Flag {
-	return []cli.Flag{
-		cli.GenericFlag{
-			Name:  "logLevel",
-			Usage: "Specifies the minimum required log level.",
-			Value: instance.Level,
-		},
-		cli.GenericFlag{
-			Name:  "logFormat",
-			Usage: "Specifies format output (text or json).",
-			Value: &instance.Format,
-		},
-		cli.GenericFlag{
-			Name:  "logColorMode",
-			Usage: "Specifies if the output is in colors or not (auto, never or always).",
-			Value: &instance.ColorMode,
-		},
-		cli.BoolFlag{
-			Name:        "logCaller",
-			Usage:       "If true the caller details will be logged too.",
-			Destination: &instance.ReportCaller,
-		},
-	}
-}
-
-func (instance *LogrusLogger) Init() error {
-	instance.Delegate.Level = instance.Level.Level
-	instance.Delegate.ReportCaller = instance.ReportCaller
-	instance.Delegate.Formatter = instance.formatter()
+	instance.Delegate.Level = lvl
+	instance.Delegate.Formatter = formatter
+	instance.Delegate.ReportCaller = configuration.ReportCaller
 	return nil
 }
 
-func (instance *LogrusLogger) formatter() logrus.Formatter {
-	switch instance.Format {
-	case "json":
-		return instance.jsonFormatter()
-	default:
-		return instance.textFormatter()
-	}
-}
-
-func (instance *LogrusLogger) textFormatter() *logrus.TextFormatter {
-	textFormatter := &logrus.TextFormatter{
-		FullTimestamp:    true,
-		QuoteEmptyFields: true,
-	}
-	switch instance.ColorMode {
-	case "always":
-		textFormatter.ForceColors = true
-	case "never":
-		textFormatter.DisableColors = true
-	}
-	return textFormatter
-}
-
-func (instance *LogrusLogger) jsonFormatter() *logrus.JSONFormatter {
-	return &logrus.JSONFormatter{}
+func (instance LogrusLogger) GetConfiguration() Configuration {
+	return instance.configuration
 }
 
 type LogrusEntry struct {

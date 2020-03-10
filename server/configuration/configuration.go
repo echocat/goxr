@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/echocat/goxr"
 	"github.com/echocat/goxr/common"
+	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
@@ -43,6 +44,23 @@ type Configuration struct {
 	Paths    Paths    `yaml:"paths,omitempty"`
 	Response Response `yaml:"response,omitempty"`
 	Logging  Logging  `yaml:"logging,omitempty"`
+}
+
+func (instance *Configuration) Flags() (result []cli.Flag) {
+	result = append(result, instance.Listen.Flags()...)
+	result = append(result, instance.Paths.Flags()...)
+	result = append(result, instance.Response.Flags()...)
+	result = append(result, instance.Logging.Flags()...)
+	return result
+}
+
+func (instance Configuration) Merge(with Configuration) (result Configuration) {
+	result = instance
+	result.Listen = result.Listen.Merge(with.Listen)
+	result.Paths = result.Paths.Merge(with.Paths)
+	result.Response = result.Response.Merge(with.Response)
+	result.Logging = result.Logging.Merge(with.Logging)
+	return result
 }
 
 func (instance *Configuration) Validate(using goxr.Box) (errors []error) {

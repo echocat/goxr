@@ -33,7 +33,12 @@ func (instance *Server) Run() error {
 		if instance.Configuration.Response.GetGzip() {
 			s.Handler = fasthttp.CompressHandler(s.Handler)
 		}
-		return s.ListenAndServe(instance.Configuration.Listen.GetHttpAddress())
+		address := instance.Configuration.Listen.GetHttpAddress()
+		instance.Log().Debug(map[string]interface{}{
+			"event":   "httpListenAndServe",
+			"address": address,
+		})
+		return s.ListenAndServe(address)
 	}
 }
 
@@ -230,11 +235,16 @@ func (instance *Server) Log() log.Logger {
 func (instance *Server) configure() error {
 	if err := instance.Validate(); err != nil {
 		return err
-	} else if err := instance.configureMimeTypes(); err != nil {
-		return err
-	} else {
-		return nil
 	}
+	if err := instance.configureMimeTypes(); err != nil {
+		return err
+	}
+	if rl, ok := instance.Log().(log.RootLogger); ok {
+		if err := rl.SetConfiguration(instance.Configuration.Logging.Configuration); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (instance *Server) configureMimeTypes() error {

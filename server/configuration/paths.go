@@ -3,6 +3,7 @@ package configuration
 import (
 	"fmt"
 	"github.com/echocat/goxr"
+	"github.com/urfave/cli"
 	"os"
 	"regexp"
 )
@@ -35,12 +36,29 @@ func (instance Paths) GetStatusCodes() map[int]string {
 	return r
 }
 
+func (instance Paths) cloneStatusCodes() map[int]string {
+	r := map[int]string{}
+	for k, v := range instance.GetStatusCodes() {
+		r[k] = v
+	}
+	return r
+}
+
 func (instance Paths) GetIncludes() []string {
 	r := instance.Includes
 	if r == nil {
 		return []string{}
 	}
 	return *r
+}
+
+func (instance Paths) cloneIncludes() []string {
+	i := instance.GetIncludes()
+	r := make([]string, len(i))
+	for i, v := range i {
+		r[i] = v
+	}
+	return r
 }
 
 func (instance Paths) GetExcludes() []string {
@@ -51,6 +69,15 @@ func (instance Paths) GetExcludes() []string {
 		}
 	}
 	return *r
+}
+
+func (instance Paths) cloneExcludes() []string {
+	i := instance.GetExcludes()
+	r := make([]string, len(i))
+	for i, v := range i {
+		r[i] = v
+	}
+	return r
 }
 
 func (instance *Paths) FindStatusCode(code int) string {
@@ -171,4 +198,34 @@ func (instance *Paths) rebuildExcludesCache() (errors []error) {
 	}
 	instance.excludesRegexpCache = &rs
 	return
+}
+
+func (instance Paths) Merge(with Paths) Paths {
+	result := instance
+
+	result.Catchall = result.Catchall.Merge(with.Catchall)
+
+	if with.Index != nil {
+		result.Index = &(*with.Index)
+		result.defaultFallback = ""
+	}
+	if with.StatusCodes != nil {
+		result.StatusCodes = with.cloneStatusCodes()
+	}
+	if with.Includes != nil {
+		v := with.cloneIncludes()
+		result.Includes = &v
+		result.includesRegexpCache = nil
+	}
+	if with.Excludes != nil {
+		v := with.cloneExcludes()
+		result.Excludes = &v
+		result.excludesRegexpCache = nil
+	}
+
+	return result
+}
+
+func (instance *Paths) Flags() []cli.Flag {
+	return []cli.Flag{}
 }

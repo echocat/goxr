@@ -3,6 +3,7 @@ package configuration
 import (
 	"fmt"
 	"github.com/echocat/goxr"
+	"github.com/urfave/cli"
 	"os"
 	"regexp"
 )
@@ -32,6 +33,15 @@ func (instance Catchall) GetIncludes() []string {
 	return *r
 }
 
+func (instance Catchall) cloneIncludes() []string {
+	i := instance.GetIncludes()
+	r := make([]string, len(i))
+	for i, v := range i {
+		r[i] = v
+	}
+	return r
+}
+
 func (instance Catchall) GetExcludes() []string {
 	r := instance.Excludes
 	if r == nil {
@@ -41,6 +51,15 @@ func (instance Catchall) GetExcludes() []string {
 		}
 	}
 	return *r
+}
+
+func (instance Catchall) cloneExcludes() []string {
+	i := instance.GetExcludes()
+	r := make([]string, len(i))
+	for i, v := range i {
+		r[i] = v
+	}
+	return r
 }
 
 func (instance *Catchall) IsEligible(candidate string) (bool, error) {
@@ -132,4 +151,28 @@ func (instance *Catchall) rebuildExcludesCache() (errors []error) {
 	}
 	instance.excludesRegexpCache = &rs
 	return
+}
+
+func (instance Catchall) Merge(with Catchall) Catchall {
+	result := instance
+
+	if with.Target != nil {
+		result.Target = &(*with.Target)
+	}
+	if with.Includes != nil {
+		v := with.cloneIncludes()
+		result.Includes = &v
+		result.includesRegexpCache = nil
+	}
+	if with.Excludes != nil {
+		v := with.cloneExcludes()
+		result.Excludes = &v
+		result.includesRegexpCache = nil
+	}
+
+	return result
+}
+
+func (instance *Catchall) Flags() []cli.Flag {
+	return []cli.Flag{}
 }
