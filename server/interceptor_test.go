@@ -99,5 +99,5 @@ func (instance *testInterceptor) OnHandleError(box goxr.Box, err error, _ bool, 
 }
 
 func (instance *testInterceptor) OnAccessLog(goxr.Box, *fasthttp.RequestCtx, *map[string]interface{}) (handled bool) {
-	panic("not implemented")
+	return false
 }
