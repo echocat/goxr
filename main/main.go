@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/echocat/goxr/common"
+	"github.com/echocat/goxr/log"
+	"github.com/urfave/cli"
 )
 
 func main() {
@@ -14,6 +16,15 @@ func main() {
 	app.Commands = append(app.Commands, CreateServerCommandInstance.NewCliCommands()...)
 	app.Commands = append(app.Commands, ListCommandInstance.NewCliCommands()...)
 	app.Commands = append(app.Commands, TruncateCommandInstance.NewCliCommands()...)
+
+	lc := log.Configuration{}
+	app.Flags = append(app.Flags, lc.Flags()...)
+	app.Before = func(context *cli.Context) error {
+		if err := log.Default.SetConfiguration(lc); err != nil {
+			return err
+		}
+		return nil
+	}
 
 	common.RunApp(app)
 }

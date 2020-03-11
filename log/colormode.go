@@ -21,9 +21,13 @@ var AllColorModes = []ColorMode{
 }
 
 func (instance *ColorMode) Set(plain string) error {
-	switch ColorMode(plain) {
-	case DefaultColorMode, AutoColorMode, NeverColorMode, AlwaysColorMode:
-		*instance = ColorMode(plain)
+	for _, candidate := range AllColorModes {
+		if candidate.String() == plain {
+			*instance = candidate
+			return nil
+		}
+	}
+	switch plain {
 	case "default":
 		*instance = DefaultColorMode
 		return nil

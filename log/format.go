@@ -19,10 +19,13 @@ var AllFormats = []Format{
 }
 
 func (instance *Format) Set(plain string) error {
-	switch Format(plain) {
-	case DefaultFormat, TextFormat, JsonFormat:
-		*instance = Format(plain)
-		return nil
+	for _, candidate := range AllFormats {
+		if candidate.String() == plain {
+			*instance = candidate
+			return nil
+		}
+	}
+	switch plain {
 	case "default":
 		*instance = DefaultFormat
 		return nil

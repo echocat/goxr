@@ -54,23 +54,27 @@ func (instance Configuration) GetColorMode(def ColorMode) ColorMode {
 func (instance *Configuration) Flags() []cli.Flag {
 	return []cli.Flag{
 		cli.GenericFlag{
-			Name:  "logLevel",
-			Usage: "Specifies the minimum required log level.",
-			Value: &instance.Level,
+			Name:   "logLevel",
+			Usage:  "Specifies the minimum required log level.",
+			EnvVar: "GOXR_LOG_LEVEL",
+			Value:  &instance.Level,
 		},
 		cli.GenericFlag{
-			Name:  "logFormat",
-			Usage: "Specifies format output (text or json).",
-			Value: &instance.Format,
+			Name:   "logFormat",
+			Usage:  "Specifies format output (text or json).",
+			EnvVar: "GOXR_LOG_FORMAT",
+			Value:  &instance.Format,
 		},
 		cli.GenericFlag{
-			Name:  "logColorMode",
-			Usage: "Specifies if the output is in colors or not (auto, never or always).",
-			Value: &instance.ColorMode,
+			Name:   "logColorMode",
+			Usage:  "Specifies if the output is in colors or not (auto, never or always).",
+			EnvVar: "GOXR_COLOR_MODE",
+			Value:  &instance.ColorMode,
 		},
 		cli.BoolFlag{
 			Name:        "logCaller",
 			Usage:       "If true the caller details will be logged too.",
+			EnvVar:      "GOXR_LOG_CALLER",
 			Destination: &instance.ReportCaller,
 		},
 	}
