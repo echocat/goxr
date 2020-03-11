@@ -1,10 +1,13 @@
 package server
 
-import "github.com/valyala/fasthttp"
+import (
+	"github.com/echocat/goxr"
+	"github.com/valyala/fasthttp"
+)
 
 type Interceptor interface {
-	OnBeforeHandle(ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx)
-	OnAfterHandle(ctx *fasthttp.RequestCtx)
-	OnTargetPathResolved(path string, ctx *fasthttp.RequestCtx) (newPath string)
-	OnHandleError(err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx)
+	OnBeforeHandle(box goxr.Box, ctx *fasthttp.RequestCtx) (handled bool, newBox goxr.Box, newCtx *fasthttp.RequestCtx)
+	OnAfterHandle(box goxr.Box, ctx *fasthttp.RequestCtx)
+	OnTargetPathResolved(box goxr.Box, path string, ctx *fasthttp.RequestCtx) (newPath string)
+	OnHandleError(box goxr.Box, err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx)
 }

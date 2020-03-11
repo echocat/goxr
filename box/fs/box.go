@@ -67,6 +67,8 @@ func (instance *Box) Info(name string) (os.FileInfo, error) {
 		return nil, common.NewPathError("info", name, os.ErrNotExist)
 	} else if fi, err := os.Stat(candidate); err != nil {
 		return nil, common.NewPathError("info", name, err)
+	} else if fi.IsDir() {
+		return nil, common.NewPathError("info", name, os.ErrNotExist)
 	} else {
 		return fi, nil
 	}

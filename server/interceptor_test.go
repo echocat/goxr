@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/echocat/goxr"
 	"github.com/echocat/goxr/box/fs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -12,12 +13,10 @@ func Test_Server_embedding_regular(t *testing.T) {
 	instance := &testInterceptor{
 		t:                             t,
 		toReturnOnBeforeHandleContext: &fasthttp.RequestCtx{},
+		toReturnOnBeforeHandleBox:     &fs.Box{},
 	}
-	box, err := fs.OpenBox("../resources/testBase1")
-	assert.Nil(t, err)
-	assert.NotNil(t, box)
 	s := Server{
-		Box:         box,
+		Box:         &fs.Box{},
 		Interceptor: instance,
 	}
 
@@ -25,8 +24,10 @@ func Test_Server_embedding_regular(t *testing.T) {
 
 	s.Handle(givenCtx)
 
+	assert.Same(t, s.Box, instance.onBeforeHandleBox)
 	assert.Same(t, givenCtx, instance.onBeforeHandleContext)
 	assert.Same(t, instance.toReturnOnBeforeHandleContext, instance.onAfterHandleContext)
+	assert.Same(t, instance.toReturnOnBeforeHandleBox, instance.onAfterHandleBox)
 }
 func Test_Server_embedding_errors(t *testing.T) {
 	instance := &testInterceptor{
@@ -41,11 +42,13 @@ func Test_Server_embedding_errors(t *testing.T) {
 		Interceptor: instance,
 	}
 
+	givenBox := &fs.Box{}
 	givenCtx := &fasthttp.RequestCtx{}
 	givenError := errors.New("foobar")
 
-	s.HandleError(givenError, true, givenCtx)
+	s.HandleError(givenBox, givenError, true, givenCtx)
 
+	assert.Same(t, givenBox, instance.onHandleErrorBox)
 	assert.Same(t, givenCtx, instance.onHandleErrorContext)
 	assert.Same(t, givenError, instance.onHandleErrorError)
 }
@@ -54,35 +57,42 @@ type testInterceptor struct {
 	t *testing.T
 
 	toReturnOnBeforeHandleContext *fasthttp.RequestCtx
+	toReturnOnBeforeHandleBox     goxr.Box
 	toReturnOnHandleErrorContext  *fasthttp.RequestCtx
 
 	onBeforeHandleContext *fasthttp.RequestCtx
+	onBeforeHandleBox     goxr.Box
 	onAfterHandleContext  *fasthttp.RequestCtx
+	onAfterHandleBox      goxr.Box
 	onHandleErrorContext  *fasthttp.RequestCtx
+	onHandleErrorBox      goxr.Box
 	onHandleErrorError    error
 }
 
-func (instance *testInterceptor) OnBeforeHandle(ctx *fasthttp.RequestCtx) (handled bool, newCtx *fasthttp.RequestCtx) {
+func (instance *testInterceptor) OnBeforeHandle(box goxr.Box, ctx *fasthttp.RequestCtx) (handled bool, newBox goxr.Box, newCtx *fasthttp.RequestCtx) {
 	assert.NotNil(instance.t, ctx)
 
+	instance.onBeforeHandleBox = box
 	instance.onBeforeHandleContext = ctx
-	return true, instance.toReturnOnBeforeHandleContext
+	return true, instance.toReturnOnBeforeHandleBox, instance.toReturnOnBeforeHandleContext
 }
 
-func (instance *testInterceptor) OnAfterHandle(ctx *fasthttp.RequestCtx) {
+func (instance *testInterceptor) OnAfterHandle(box goxr.Box, ctx *fasthttp.RequestCtx) {
 	assert.NotNil(instance.t, ctx)
 
+	instance.onAfterHandleBox = box
 	instance.onAfterHandleContext = ctx
 }
 
-func (instance *testInterceptor) OnTargetPathResolved(path string, ctx *fasthttp.RequestCtx) (newPath string) {
+func (instance *testInterceptor) OnTargetPathResolved(goxr.Box, string, *fasthttp.RequestCtx) string {
 	panic("not implemented")
 }
 
-func (instance *testInterceptor) OnHandleError(err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx) {
+func (instance *testInterceptor) OnHandleError(box goxr.Box, err error, _ bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx) {
 	assert.NotNil(instance.t, err)
 	assert.NotNil(instance.t, ctx)
 
+	instance.onHandleErrorBox = box
 	instance.onHandleErrorContext = ctx
 	instance.onHandleErrorError = err
 	return true, err, instance.onHandleErrorContext
