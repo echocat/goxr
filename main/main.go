@@ -19,7 +19,11 @@ func main() {
 
 	lc := log.Configuration{}
 	app.Flags = append(app.Flags, lc.Flags()...)
+	oldBefore := app.Before
 	app.Before = func(context *cli.Context) error {
+		if err := oldBefore(context); err != nil {
+			return err
+		}
 		if err := log.Default.SetConfiguration(lc); err != nil {
 			return err
 		}
