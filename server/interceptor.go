@@ -10,4 +10,5 @@ type Interceptor interface {
 	OnAfterHandle(box goxr.Box, ctx *fasthttp.RequestCtx)
 	OnTargetPathResolved(box goxr.Box, path string, ctx *fasthttp.RequestCtx) (newPath string)
 	OnHandleError(box goxr.Box, err error, interceptAllowed bool, ctx *fasthttp.RequestCtx) (handled bool, newErr error, newCtx *fasthttp.RequestCtx)
+	OnAccessLog(box goxr.Box, ctx *fasthttp.RequestCtx, event *map[string]interface{}) (handled bool)
 }

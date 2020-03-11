@@ -50,29 +50,36 @@ func (instance *Server) Validate() error {
 }
 
 func (instance *Server) Handle(ctx *fasthttp.RequestCtx) {
+	ctxToUse := ctx
+	boxToUse := instance.Box
 	if instance.Configuration.Logging.GetAccessLog() {
 		start := time.Now()
 		defer func(start time.Time) {
 			d := time.Now().Sub(start)
-			instance.Log().Info(map[string]interface{}{
-				"event":    "accessLog",
-				"duration": d,
-				"host":     string(ctx.Host()),
-				"method":   string(ctx.Method()),
-				"uri":      string(ctx.RequestURI()),
-				"remote":   ctx.RemoteAddr().String(),
-				"local":    ctx.LocalAddr().String(),
-				"status":   ctx.Response.StatusCode(),
-			})
+			entry := map[string]interface{}{
+				"event":     "accessLog",
+				"duration":  d,
+				"host":      string(ctx.Host()),
+				"method":    string(ctx.Method()),
+				"uri":       string(ctx.RequestURI()),
+				"remote":    ctx.RemoteAddr().String(),
+				"local":     ctx.LocalAddr().String(),
+				"status":    ctx.Response.StatusCode(),
+				"userAgent": string(ctx.Request.Header.UserAgent()),
+			}
+			if handled := instance.onAccessLog(boxToUse, ctxToUse, &entry); !handled {
+				instance.Log().Info(entry)
+			}
 		}(start)
 	}
-	handled, newBox, newCtx := instance.onBeforeHandle(instance.Box, ctx)
-	defer instance.onAfterHandle(newBox, newCtx)
+	var handled bool
+	handled, boxToUse, ctxToUse = instance.onBeforeHandle(instance.Box, ctx)
+	defer instance.onAfterHandle(boxToUse, ctxToUse)
 
 	if !handled {
-		path := instance.ResolveInitialTargetPath(newBox, newCtx)
-		instance.WriteGenericHeaders(newCtx)
-		instance.ServeFile(newBox, path, newCtx, true, http.StatusOK)
+		path := instance.ResolveInitialTargetPath(boxToUse, ctxToUse)
+		instance.WriteGenericHeaders(ctxToUse)
+		instance.ServeFile(boxToUse, path, ctxToUse, true, http.StatusOK)
 	}
 }
 
@@ -281,4 +288,11 @@ func (instance *Server) onHandleError(box goxr.Box, err error, interceptAllowed 
 		return i.OnHandleError(box, err, interceptAllowed, ctx)
 	}
 	return false, err, ctx
+}
+
+func (instance *Server) onAccessLog(box goxr.Box, ctx *fasthttp.RequestCtx, event *map[string]interface{}) (handled bool) {
+	if i := instance.Interceptor; i != nil {
+		return i.OnAccessLog(box, ctx, event)
+	}
+	return false
 }
