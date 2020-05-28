@@ -57,15 +57,15 @@ func (instance *Server) Handle(ctx *fasthttp.RequestCtx) {
 		defer func(start time.Time) {
 			d := time.Now().Sub(start)
 			entry := map[string]interface{}{
-				"event":     "accessLog",
-				"duration":  d,
-				"host":      string(ctx.Host()),
-				"method":    string(ctx.Method()),
-				"uri":       string(ctx.RequestURI()),
-				"remote":    ctx.RemoteAddr().String(),
-				"local":     ctx.LocalAddr().String(),
-				"status":    ctx.Response.StatusCode(),
-				"userAgent": string(ctx.Request.Header.UserAgent()),
+				"event":      "accessLog",
+				"duration":   d,
+				"host":       string(ctx.Host()),
+				"method":     string(ctx.Method()),
+				"requestUri": string(ctx.RequestURI()),
+				"remote":     ctx.RemoteAddr().String(),
+				"local":      ctx.LocalAddr().String(),
+				"status":     ctx.Response.StatusCode(),
+				"userAgent":  string(ctx.Request.Header.UserAgent()),
 			}
 			if handled := instance.onAccessLog(boxToUse, ctxToUse, &entry); !handled {
 				instance.Log().Info(entry)

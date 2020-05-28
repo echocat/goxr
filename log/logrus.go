@@ -119,7 +119,12 @@ func (instance *LogrusLogger) SetConfiguration(configuration Configuration) erro
 	var formatter logrus.Formatter
 	switch configuration.GetFormat(TextFormat) {
 	case JsonFormat:
-		formatter = &logrus.JSONFormatter{}
+		formatter = &logrus.JSONFormatter{FieldMap: logrus.FieldMap{
+			logrus.FieldKeyTime:  "@timestamp",
+			logrus.FieldKeyLevel: "@level",
+			logrus.FieldKeyMsg:   "@message",
+			logrus.FieldKeyFunc:  "@caller",
+		}}
 	default:
 		formatter = &logrus.TextFormatter{
 			FullTimestamp:    true,
