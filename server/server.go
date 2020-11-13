@@ -194,6 +194,7 @@ func (instance *Server) WriteFileHeadersFor(fi os.FileInfo, ctx *fasthttp.Reques
 	if typ := mime.TypeByExtension(sPath.Ext(fi.Name())); typ != "" && instance.Configuration.Response.GetWithContentType() {
 		ctx.Response.Header.SetContentType(typ)
 	}
+	instance.onWriteHeadersFor(instance.Box, ctx, fi)
 }
 
 func (instance *Server) DoesETagMatched(box goxr.Box, fi os.FileInfo, ctx *fasthttp.RequestCtx) bool {
@@ -295,4 +296,10 @@ func (instance *Server) onAccessLog(box goxr.Box, ctx *fasthttp.RequestCtx, even
 		return i.OnAccessLog(box, ctx, event)
 	}
 	return false
+}
+
+func (instance *Server) onWriteHeadersFor(box goxr.Box, ctx *fasthttp.RequestCtx, info os.FileInfo) {
+	if i := instance.Interceptor; i != nil {
+		i.OnWriteHeadersFor(box, ctx, info)
+	}
 }
