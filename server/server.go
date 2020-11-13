@@ -108,7 +108,7 @@ func (instance *Server) ServeFile(box goxr.Box, path string, ctx *fasthttp.Reque
 			}
 		}()
 
-		if fi, err := f.Stat(); err != nil {
+		if fi, err := f.GetFileInfo(); err != nil {
 			instance.HandleError(box, err, interceptAllowed, ctx)
 		} else if fi.IsDir() {
 			instance.HandleError(box, os.ErrNotExist, interceptAllowed, ctx)

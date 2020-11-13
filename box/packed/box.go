@@ -66,7 +66,7 @@ func (instance *Box) Open(pathname string) (common.File, error) {
 	}
 }
 
-func (instance *Box) Info(pathname string) (os.FileInfo, error) {
+func (instance *Box) Info(pathname string) (common.FileInfo, error) {
 	if candidate, err := instance.resolvePath(pathname); err != nil {
 		return nil, common.NewPathError("open", pathname, err)
 	} else if e := instance.Entries.Find(candidate); e == nil {
@@ -84,7 +84,7 @@ func (instance *Box) Close() error {
 	return nil
 }
 
-func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, os.FileInfo) error) error {
+func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, common.FileInfo) error) error {
 	for p, e := range instance.Entries {
 		if predicate != nil {
 			if ok, err := predicate(p); err != nil {

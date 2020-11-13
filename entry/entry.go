@@ -6,13 +6,14 @@ import (
 	"encoding/base64"
 	"github.com/echocat/goxr/common"
 	"os"
+	"path"
 	"time"
 )
 
 //noinspection GoStructTag
 type Entry struct {
 	_msgpack struct{}          `msgpack:",asArray"`
-	BaseName string            // 0
+	Filename string            // 0
 	Offset   common.FileOffset // 1
 	Length   int64             // 2
 	FileMode os.FileMode       // 3
@@ -22,7 +23,11 @@ type Entry struct {
 }
 
 func (instance Entry) Name() string {
-	return instance.BaseName
+	return path.Base(instance.Filename)
+}
+
+func (instance Entry) Path() string {
+	return instance.Filename
 }
 
 func (instance Entry) Size() int64 {
@@ -46,7 +51,7 @@ func (instance Entry) Sys() interface{} {
 }
 
 func (instance Entry) String() string {
-	return instance.BaseName
+	return instance.Filename
 }
 
 func (instance Entry) ChecksumString() string {

@@ -38,7 +38,7 @@ type Box struct {
 	prefix            string
 }
 
-func (instance *Box) resolvePath(name string) (string, error) {
+func (instance *Box) clean(name string) (string, error) {
 	candidate := entry.CleanPath(name)
 	if instance.prefix != "" {
 		if !strings.HasPrefix(candidate, instance.prefix) {
@@ -46,23 +46,31 @@ func (instance *Box) resolvePath(name string) (string, error) {
 		}
 		candidate = candidate[len(instance.prefix):]
 	}
-	return filepath.Clean(filepath.Join(instance.base, filepath.FromSlash(candidate))), nil
+	return candidate, nil
+}
+
+func (instance *Box) resolvePath(name string) (string, error) {
+	return filepath.Clean(filepath.Join(instance.base, filepath.FromSlash(name))), nil
 }
 
 func (instance *Box) Open(name string) (common.File, error) {
-	if candidate, err := instance.resolvePath(name); err != nil {
+	if cleaned, err := instance.clean(name); err != nil {
+		return nil, common.NewPathError("open", name, err)
+	} else if candidate, err := instance.resolvePath(cleaned); err != nil {
 		return nil, common.NewPathError("open", name, err)
 	} else if candidate != instance.base && !strings.HasPrefix(candidate, instance.baseWithSeparator) {
 		return nil, common.NewPathError("open", name, os.ErrNotExist)
 	} else if f, err := os.Open(candidate); err != nil {
 		return nil, common.NewPathError("open", name, err)
 	} else {
-		return f, nil
+		return &file{f, cleaned}, nil
 	}
 }
 
-func (instance *Box) Info(name string) (os.FileInfo, error) {
-	if candidate, err := instance.resolvePath(name); err != nil {
+func (instance *Box) Info(name string) (common.FileInfo, error) {
+	if cleaned, err := instance.clean(name); err != nil {
+		return nil, common.NewPathError("info", name, err)
+	} else if candidate, err := instance.resolvePath(cleaned); err != nil {
 		return nil, common.NewPathError("info", name, err)
 	} else if candidate != instance.base && !strings.HasPrefix(candidate, instance.baseWithSeparator) {
 		return nil, common.NewPathError("info", name, os.ErrNotExist)
@@ -71,11 +79,11 @@ func (instance *Box) Info(name string) (os.FileInfo, error) {
 	} else if fi.IsDir() {
 		return nil, common.NewPathError("info", name, os.ErrNotExist)
 	} else {
-		return fi, nil
+		return &fileInfo{fi, candidate}, nil
 	}
 }
 
-func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, os.FileInfo) error) error {
+func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, common.FileInfo) error) error {
 	base, err := filepath.Abs(instance.base)
 	if err != nil {
 		return fmt.Errorf("cannot iterate over box %s: %v", instance.base, err)
@@ -104,7 +112,7 @@ func (instance *Box) ForEach(predicate common.FilePredicate, callback func(strin
 				return nil
 			}
 		}
-		return callback(p, info)
+		return callback(p, &fileInfo{info, p})
 	}); err != nil {
 		return fmt.Errorf("cannot iterate over box %s: %v", instance.base, err)
 	}
@@ -114,4 +122,30 @@ func (instance *Box) ForEach(predicate common.FilePredicate, callback func(strin
 
 func (instance *Box) Close() error {
 	return nil
+}
+
+type file struct {
+	*os.File
+	path string
+}
+
+func (instance *file) Stat() (os.FileInfo, error) {
+	return instance.GetFileInfo()
+}
+
+func (instance *file) GetFileInfo() (common.FileInfo, error) {
+	fi, err := instance.File.Stat()
+	if err != nil {
+		return nil, err
+	}
+	return &fileInfo{fi, instance.path}, nil
+}
+
+type fileInfo struct {
+	os.FileInfo
+	path string
+}
+
+func (instance *fileInfo) Path() string {
+	return instance.path
 }

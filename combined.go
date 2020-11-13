@@ -22,7 +22,7 @@ func (instance CombinedBox) Open(name string) (common.File, error) {
 	return nil, common.NewPathError("open", name, os.ErrNotExist)
 }
 
-func (instance CombinedBox) Info(name string) (os.FileInfo, error) {
+func (instance CombinedBox) Info(name string) (common.FileInfo, error) {
 	for _, box := range instance {
 		if fi, err := box.Info(name); os.IsNotExist(err) {
 			continue
@@ -59,7 +59,7 @@ func (instance CombinedBox) Close() error {
 	}
 }
 
-func (instance CombinedBox) ForEach(predicate common.FilePredicate, callback func(string, os.FileInfo) error) error {
+func (instance CombinedBox) ForEach(predicate common.FilePredicate, callback func(string, common.FileInfo) error) error {
 	for _, box := range instance {
 		if ib, ok := box.(Iterable); ok {
 			if err := ib.ForEach(predicate, callback); err != nil {

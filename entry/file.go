@@ -71,6 +71,10 @@ func (instance *File) Readdir(count int) ([]os.FileInfo, error) {
 }
 
 func (instance *File) Stat() (os.FileInfo, error) {
+	return instance.GetFileInfo()
+}
+
+func (instance *File) GetFileInfo() (common.FileInfo, error) {
 	return instance.Entry, nil
 }
 

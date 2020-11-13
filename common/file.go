@@ -11,10 +11,16 @@ type File interface {
 	io.Seeker
 	Readdir(count int) ([]os.FileInfo, error)
 	Stat() (os.FileInfo, error)
+	GetFileInfo() (FileInfo, error)
+}
+
+type FileInfo interface {
+	os.FileInfo
+	Path() string
 }
 
 type ExtendedFileInfo interface {
-	os.FileInfo
+	FileInfo
 	ChecksumString() string
 }
 

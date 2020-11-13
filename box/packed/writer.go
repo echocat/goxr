@@ -102,7 +102,7 @@ func (instance *Writer) NewWriter(te TargetEntry) (io.WriteCloser, error) {
 
 	entryPosition := instance.offset
 	e := entry.Entry{
-		BaseName: path.Base(te.Filename),
+		Filename: te.Filename,
 		Offset:   entryPosition,
 		Time:     time.Now(),
 		FileMode: os.FileMode(0644),

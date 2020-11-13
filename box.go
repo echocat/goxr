@@ -8,7 +8,6 @@ import (
 	"github.com/echocat/goxr/log"
 	"github.com/echocat/goxr/runtime"
 	"io"
-	"os"
 	"path/filepath"
 	sr "runtime"
 	"strings"
@@ -29,11 +28,11 @@ var (
 type Box interface {
 	io.Closer
 	Open(name string) (common.File, error)
-	Info(pathname string) (os.FileInfo, error)
+	Info(pathname string) (common.FileInfo, error)
 }
 
 type Iterable interface {
-	ForEach(common.FilePredicate, func(string, os.FileInfo) error) error
+	ForEach(common.FilePredicate, func(string, common.FileInfo) error) error
 }
 
 func OpenBox(base ...string) (Box, error) {
