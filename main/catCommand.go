@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/echocat/goxr/box/packed"
+	"github.com/echocat/goxr/common"
 	"github.com/echocat/goxr/log"
 	"github.com/urfave/cli"
 	"io"
@@ -52,15 +53,15 @@ func (instance *CatCommand) ExecuteFromCli(_ *cli.Context) error {
 			WithField("builtBy", box.BuiltBy).
 			Infof("Displaying of %s...", instance.Filename)
 
-		return box.ForEach(instance.FilePredicate, func(path string, info os.FileInfo) error {
-			l.Infof("  %s", path)
-			return instance.displayEntry(path, info, box)
+		return box.ForEach(instance.FilePredicate, func(info common.FileInfo) error {
+			l.Infof("  %s", info.Path())
+			return instance.displayEntry(info, box)
 		})
 	})
 }
 
-func (instance *CatCommand) displayEntry(path string, _ os.FileInfo, box *packed.Box) error {
-	f, err := box.Open(path)
+func (instance *CatCommand) displayEntry(info common.FileInfo, box *packed.Box) error {
+	f, err := box.Open(info.Path())
 	if err != nil {
 		return err
 	}

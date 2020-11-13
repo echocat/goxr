@@ -83,7 +83,7 @@ func (instance *Box) Info(name string) (common.FileInfo, error) {
 	}
 }
 
-func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, common.FileInfo) error) error {
+func (instance *Box) ForEach(predicate common.FilePredicate, callback func(common.FileInfo) error) error {
 	base, err := filepath.Abs(instance.base)
 	if err != nil {
 		return fmt.Errorf("cannot iterate over box %s: %v", instance.base, err)
@@ -112,7 +112,7 @@ func (instance *Box) ForEach(predicate common.FilePredicate, callback func(strin
 				return nil
 			}
 		}
-		return callback(p, &fileInfo{info, p})
+		return callback(&fileInfo{info, p})
 	}); err != nil {
 		return fmt.Errorf("cannot iterate over box %s: %v", instance.base, err)
 	}

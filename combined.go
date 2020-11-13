@@ -59,7 +59,7 @@ func (instance CombinedBox) Close() error {
 	}
 }
 
-func (instance CombinedBox) ForEach(predicate common.FilePredicate, callback func(string, common.FileInfo) error) error {
+func (instance CombinedBox) ForEach(predicate common.FilePredicate, callback func(common.FileInfo) error) error {
 	for _, box := range instance {
 		if ib, ok := box.(Iterable); ok {
 			if err := ib.ForEach(predicate, callback); err != nil {

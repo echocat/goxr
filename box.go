@@ -32,7 +32,7 @@ type Box interface {
 }
 
 type Iterable interface {
-	ForEach(common.FilePredicate, func(string, common.FileInfo) error) error
+	ForEach(common.FilePredicate, func(common.FileInfo) error) error
 }
 
 func OpenBox(base ...string) (Box, error) {

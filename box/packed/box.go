@@ -84,7 +84,7 @@ func (instance *Box) Close() error {
 	return nil
 }
 
-func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, common.FileInfo) error) error {
+func (instance *Box) ForEach(predicate common.FilePredicate, callback func(common.FileInfo) error) error {
 	for p, e := range instance.Entries {
 		if predicate != nil {
 			if ok, err := predicate(p); err != nil {
@@ -93,7 +93,7 @@ func (instance *Box) ForEach(predicate common.FilePredicate, callback func(strin
 				continue
 			}
 		}
-		if err := callback(p, e); err != nil {
+		if err := callback(e); err != nil {
 			return err
 		}
 	}

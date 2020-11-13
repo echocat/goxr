@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/echocat/goxr/box/packed"
+	"github.com/echocat/goxr/common"
 	"github.com/echocat/goxr/log"
 	"github.com/urfave/cli"
-	"os"
 	"regexp"
 	"time"
 )
@@ -51,8 +51,8 @@ func (instance *ListCommand) ExecuteFromCli(*cli.Context) error {
 			WithField("builtBy", box.BuiltBy).
 			Infof("Entries of %s...", instance.Filename)
 
-		return box.ForEach(instance.FilePredicate, func(path string, info os.FileInfo) error {
-			l.Infof("  %-30s (size: %10d, modified: %v, mod: %v)", path, info.Size(), info.ModTime().Truncate(time.Second), info.Mode())
+		return box.ForEach(instance.FilePredicate, func(info common.FileInfo) error {
+			l.Infof("  %-30s (size: %10d, modified: %v, mod: %v)", info.Path(), info.Size(), info.ModTime().Truncate(time.Second), info.Mode())
 			return nil
 		})
 	})
