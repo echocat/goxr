@@ -164,7 +164,7 @@ func (instance *Server) StatusCodeFor(err error) int {
 	return http.StatusInternalServerError
 }
 
-func (instance *Server) NotModifiedFor(box goxr.Box, fi os.FileInfo, ctx *fasthttp.RequestCtx) {
+func (instance *Server) NotModifiedFor(box goxr.Box, fi common.FileInfo, ctx *fasthttp.RequestCtx) {
 	if instance.ShouldHandleStatusCode(box, http.StatusNotModified, ctx) {
 		return
 	}
@@ -184,7 +184,7 @@ func (instance *Server) WriteGenericHeaders(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-func (instance *Server) WriteFileHeadersFor(fi os.FileInfo, ctx *fasthttp.RequestCtx) {
+func (instance *Server) WriteFileHeadersFor(fi common.FileInfo, ctx *fasthttp.RequestCtx) {
 	if efi, ok := fi.(common.ExtendedFileInfo); ok && instance.Configuration.Response.GetWithEtag() {
 		ctx.Response.Header.Set("Etag", fmt.Sprintf(`"%s"`, efi.ChecksumString()))
 	}
@@ -197,7 +197,7 @@ func (instance *Server) WriteFileHeadersFor(fi os.FileInfo, ctx *fasthttp.Reques
 	instance.onWriteHeadersFor(instance.Box, ctx, fi)
 }
 
-func (instance *Server) DoesETagMatched(box goxr.Box, fi os.FileInfo, ctx *fasthttp.RequestCtx) bool {
+func (instance *Server) DoesETagMatched(box goxr.Box, fi common.FileInfo, ctx *fasthttp.RequestCtx) bool {
 	if !instance.Configuration.Response.GetWithEtag() {
 		return false
 	}
@@ -209,7 +209,7 @@ func (instance *Server) DoesETagMatched(box goxr.Box, fi os.FileInfo, ctx *fasth
 	return false
 }
 
-func (instance *Server) DoesModifiedMatched(box goxr.Box, fi os.FileInfo, ctx *fasthttp.RequestCtx) bool {
+func (instance *Server) DoesModifiedMatched(box goxr.Box, fi common.FileInfo, ctx *fasthttp.RequestCtx) bool {
 	if !instance.Configuration.Response.GetWithLastModified() {
 		return false
 	}
@@ -298,7 +298,7 @@ func (instance *Server) onAccessLog(box goxr.Box, ctx *fasthttp.RequestCtx, even
 	return false
 }
 
-func (instance *Server) onWriteHeadersFor(box goxr.Box, ctx *fasthttp.RequestCtx, info os.FileInfo) {
+func (instance *Server) onWriteHeadersFor(box goxr.Box, ctx *fasthttp.RequestCtx, info common.FileInfo) {
 	if i := instance.Interceptor; i != nil {
 		i.OnWriteHeadersFor(box, ctx, info)
 	}
