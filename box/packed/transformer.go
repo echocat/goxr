@@ -5,10 +5,10 @@ import (
 	"github.com/echocat/goxr/entry"
 )
 
-type ToFileTransformer func(operation string, fullPath string, entry entry.Entry) (common.File, error)
+type ToFileTransformer func(operation string, fullPath string, entry *entry.Entry) (common.File, error)
 
 func ToFileTransformerFor(rf entry.ReaderFactory) ToFileTransformer {
-	return func(operation string, fullPath string, e entry.Entry) (common.File, error) {
+	return func(operation string, fullPath string, e *entry.Entry) (common.File, error) {
 		return &entry.File{
 			Entry:         e,
 			Path:          fullPath,

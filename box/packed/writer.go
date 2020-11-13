@@ -116,7 +116,7 @@ func (instance *Writer) NewWriter(te TargetEntry) (io.WriteCloser, error) {
 		e.Time = *te.Time
 	}
 
-	if err := instance.box.Entries.Add(te.Filename, e); err != nil {
+	if err := instance.box.Entries.Add(te.Filename, &e); err != nil {
 		return nil, common.NewPathError("newEntryWriter", te.Filename, err)
 	}
 

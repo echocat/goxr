@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-type Entries map[string]Entry
+type Entries map[string]*Entry
 
 func (instance *Entries) Find(pathname string) *Entry {
 	if instance == nil || *instance == nil {
@@ -15,26 +15,26 @@ func (instance *Entries) Find(pathname string) *Entry {
 
 	cleanedPath := CleanPath(pathname)
 	if entry, ok := (*instance)[cleanedPath]; ok {
-		return &entry
+		return entry
 	} else {
 		return nil
 	}
 }
 
-func (instance *Entries) Get(pathname string) (Entry, error) {
+func (instance *Entries) Get(pathname string) (*Entry, error) {
 	if instance == nil || *instance == nil {
-		return Entry{}, os.ErrNotExist
+		return nil, os.ErrNotExist
 	}
 
 	cleanedPath := CleanPath(pathname)
 	if entry, ok := (*instance)[cleanedPath]; !ok {
-		return Entry{}, os.ErrNotExist
+		return nil, os.ErrNotExist
 	} else {
 		return entry, nil
 	}
 }
 
-func (instance *Entries) Add(pathname string, entry Entry) error {
+func (instance *Entries) Add(pathname string, entry *Entry) error {
 	if instance == nil || *instance == nil {
 		*instance = make(Entries)
 	}
@@ -47,7 +47,7 @@ func (instance *Entries) Add(pathname string, entry Entry) error {
 	return nil
 }
 
-func (instance *Entries) Replace(pathname string, entry Entry) error {
+func (instance *Entries) Replace(pathname string, entry *Entry) error {
 	if instance == nil || *instance == nil {
 		*instance = make(Entries)
 	}

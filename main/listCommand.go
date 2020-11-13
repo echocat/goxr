@@ -4,6 +4,7 @@ import (
 	"github.com/echocat/goxr/box/packed"
 	"github.com/echocat/goxr/log"
 	"github.com/urfave/cli"
+	"os"
 	"regexp"
 	"time"
 )
@@ -38,25 +39,21 @@ func (instance *ListCommand) NewCliCommands() []cli.Command {
 	}}
 }
 
-func (instance *ListCommand) ExecuteFromCli(ctx *cli.Context) error {
+func (instance *ListCommand) ExecuteFromCli(*cli.Context) error {
 	return instance.DoWithBox(func(box *packed.Box) error {
 		l := log.WithField("box", instance.Filename)
-		if entries, err := box.Entries.Filter(instance.EntryPredicate); err != nil {
-			return err
-		} else {
-			l.
-				WithField("name", box.Name).
-				WithField("description", box.Description).
-				WithField("version", box.Version).
-				WithField("revision", box.Revision).
-				WithField("built", box.Built).
-				WithField("builtBy", box.BuiltBy).
-				Infof("Entries of %s...", instance.Filename)
+		l.
+			WithField("name", box.Name).
+			WithField("description", box.Description).
+			WithField("version", box.Version).
+			WithField("revision", box.Revision).
+			WithField("built", box.Built).
+			WithField("builtBy", box.BuiltBy).
+			Infof("Entries of %s...", instance.Filename)
 
-			for path, entry := range entries {
-				l.Infof("  %-30s (size: %10d, modified: %v, mod: %v)", path, entry.Size(), entry.ModTime().Truncate(time.Second), entry.Mode())
-			}
+		return box.ForEach(instance.FilePredicate, func(path string, info os.FileInfo) error {
+			l.Infof("  %-30s (size: %10d, modified: %v, mod: %v)", path, info.Size(), info.ModTime().Truncate(time.Second), info.Mode())
 			return nil
-		}
+		})
 	})
 }

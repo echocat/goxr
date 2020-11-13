@@ -7,7 +7,7 @@ import (
 )
 
 type File struct {
-	Entry         Entry
+	Entry         *Entry
 	Path          string
 	ReaderFactory ReaderFactory
 

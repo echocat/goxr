@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/echocat/goxr/entry"
 	"github.com/urfave/cli"
 	"regexp"
 )
@@ -42,7 +41,7 @@ func (instance *FilteringBoxCommand) BeforeCli(cli *cli.Context) error {
 	return nil
 }
 
-func (instance *FilteringBoxCommand) EntryPredicate(path string, e entry.Entry) (bool, error) {
+func (instance *FilteringBoxCommand) FilePredicate(path string) (bool, error) {
 	if len(instance.FilenamePatterns) == 0 {
 		return true, nil
 	}

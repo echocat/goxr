@@ -62,7 +62,7 @@ func (instance *Box) Open(pathname string) (common.File, error) {
 	} else if instance.EntryToFileTransformer == nil {
 		return nil, common.NewPathError("open", pathname, entry.ErrNoToFileTransformerProvided)
 	} else {
-		return instance.EntryToFileTransformer("open", candidate, *e)
+		return instance.EntryToFileTransformer("open", candidate, e)
 	}
 }
 
@@ -80,6 +80,22 @@ func (instance *Box) Close() error {
 	onClose := instance.OnClose
 	if onClose != nil {
 		return onClose()
+	}
+	return nil
+}
+
+func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, os.FileInfo) error) error {
+	for p, e := range instance.Entries {
+		if predicate != nil {
+			if ok, err := predicate(p); err != nil {
+				return err
+			} else if !ok {
+				continue
+			}
+		}
+		if err := callback(p, e); err != nil {
+			return err
+		}
 	}
 	return nil
 }

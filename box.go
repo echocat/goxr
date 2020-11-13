@@ -1,6 +1,7 @@
 package goxr
 
 import (
+	"errors"
 	"github.com/echocat/goxr/box/fs"
 	"github.com/echocat/goxr/box/packed"
 	"github.com/echocat/goxr/common"
@@ -21,12 +22,18 @@ var (
 	// This is useful in case for behave differently for build versions of you application
 	AllowFallbackToFsBox                       = true
 	OnFallbackToFsBox    OnFallbackToFsBoxFunc = OnFallbackToFsBox_Default
+
+	ErrBoxIterationNotSupported = errors.New("box iteration not supported")
 )
 
 type Box interface {
 	io.Closer
 	Open(name string) (common.File, error)
 	Info(pathname string) (os.FileInfo, error)
+}
+
+type Iterable interface {
+	ForEach(common.FilePredicate, func(string, os.FileInfo) error) error
 }
 
 func OpenBox(base ...string) (Box, error) {

@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"fmt"
 	"github.com/echocat/goxr/common"
 	"github.com/echocat/goxr/entry"
 	"os"
@@ -72,6 +73,43 @@ func (instance *Box) Info(name string) (os.FileInfo, error) {
 	} else {
 		return fi, nil
 	}
+}
+
+func (instance *Box) ForEach(predicate common.FilePredicate, callback func(string, os.FileInfo) error) error {
+	base, err := filepath.Abs(instance.base)
+	if err != nil {
+		return fmt.Errorf("cannot iterate over box %s: %v", instance.base, err)
+	}
+	base += fmt.Sprintf("%c", os.PathSeparator)
+
+	if err := filepath.Walk(instance.base, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		fullPath, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		if !strings.HasPrefix(fullPath, base) {
+			return fmt.Errorf("found inside of '%s' a file (%s) which is not in the same path", base, fullPath)
+		}
+		p := filepath.ToSlash(fullPath[len(base):])
+		if predicate != nil {
+			if ok, err := predicate(p); err != nil {
+				return err
+			} else if !ok {
+				return nil
+			}
+		}
+		return callback(p, info)
+	}); err != nil {
+		return fmt.Errorf("cannot iterate over box %s: %v", instance.base, err)
+	}
+
+	return nil
 }
 
 func (instance *Box) Close() error {

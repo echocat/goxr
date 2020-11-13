@@ -59,6 +59,19 @@ func (instance CombinedBox) Close() error {
 	}
 }
 
+func (instance CombinedBox) ForEach(predicate common.FilePredicate, callback func(string, os.FileInfo) error) error {
+	for _, box := range instance {
+		if ib, ok := box.(Iterable); ok {
+			if err := ib.ForEach(predicate, callback); err != nil {
+				return err
+			}
+		} else {
+			return ErrBoxIterationNotSupported
+		}
+	}
+	return nil
+}
+
 func (instance CombinedBox) With(box Box) CombinedBox {
 	return append(instance, box)
 }

@@ -17,3 +17,5 @@ type ExtendedFileInfo interface {
 	os.FileInfo
 	ChecksumString() string
 }
+
+type FilePredicate func(name string) (bool, error)

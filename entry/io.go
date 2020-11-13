@@ -9,4 +9,4 @@ type Reader interface {
 	io.Seeker
 }
 
-type ReaderFactory func(entry Entry) (Reader, error)
+type ReaderFactory func(entry *Entry) (Reader, error)

@@ -59,4 +59,4 @@ func (instance Entry) ChecksumString() string {
 type Sha256Checksum [sha256.Size]byte
 type Meta map[string]interface{}
 
-type Predicate func(path string, entry Entry) (bool, error)
+type Predicate func(path string, entry *Entry) (bool, error)

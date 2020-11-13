@@ -76,7 +76,7 @@ type reader struct {
 	mmap     mmap.MMap
 }
 
-func (instance *reader) newEntryReader(e entry.Entry) (entry.Reader, error) {
+func (instance *reader) newEntryReader(e *entry.Entry) (entry.Reader, error) {
 	begin := int(e.Offset)
 	end := begin + int(e.Length)
 	reader := bytes.NewReader(instance.mmap[begin:end])
