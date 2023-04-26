@@ -10,7 +10,7 @@ require (
 	github.com/valyala/fasthttp v1.34.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	google.golang.org/appengine v1.6.5 // indirect
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 go 1.14
