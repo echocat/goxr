@@ -7,7 +7,7 @@ require (
 	github.com/sirupsen/logrus v1.9.2
 	github.com/stretchr/testify v1.8.3
 	github.com/urfave/cli v1.22.13
-	github.com/valyala/fasthttp v1.47.0
+	github.com/valyala/fasthttp v1.48.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	google.golang.org/appengine v1.6.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0
