@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/echocat/goxr/log"
 	"github.com/echocat/goxr/runtime"
+	"github.com/echocat/slf4g"
+	_ "github.com/echocat/slf4g/native"
 	"github.com/urfave/cli"
 	"net/http"
 	_ "net/http/pprof"
@@ -128,12 +129,10 @@ func NewApp() *cli.App {
 func cliXpprofHandler() {
 	if cliXpprofListen != "" {
 		go func() {
-			log.WithField("listenAddress", cliXpprofListen).
-				Warnf("DO NOT USE IN PRODUCTION!"+
-					" pprof server was activated for debugging at listen address %s."+
-					" This functionality is only for debug purposes.",
-					cliXpprofListen,
-				)
+			log.With("listenAddress", cliXpprofListen).
+				Warnf("DO NOT USE IN PRODUCTION!" +
+					" pprof server was activated for debugging at listen address." +
+					" This functionality is only for debug purposes.")
 			if err := http.ListenAndServe(cliXpprofListen, nil); err != nil {
 				panic(err)
 			}

@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/echocat/goxr/box/packed"
-	"github.com/echocat/goxr/log"
+	"github.com/echocat/slf4g"
 	"github.com/urfave/cli"
 )
 
@@ -70,22 +70,22 @@ func (instance *CreateCommand) ExecuteFromCli(ctx *cli.Context) error {
 	return instance.DoWithWriter(func(writer *packed.Writer, bases []string) error {
 		box := writer.Box()
 		l := log.
-			WithField("box", instance.Filename)
+			With("box", instance.Filename)
 		l.
-			WithField("name", box.Name).
-			WithField("description", box.Description).
-			WithField("version", box.Version).
-			WithField("revision", box.Revision).
-			WithField("built", box.Built).
+			With("name", box.Name).
+			With("description", box.Description).
+			With("version", box.Version).
+			With("revision", box.Revision).
+			With("built", box.Built).
 			Infof("Creating box %s...", instance.Filename)
 
 		for _, base := range bases {
-			sl := l.WithField("base", base)
+			sl := l.With("base", base)
 			sl.Infof("Adding files of %s...", base)
 			if err := writer.WriteFilesRecursive(base, func(candidate *packed.WriteCandidate) error {
 				sl.
-					WithField("target", candidate.Target.Filename).
-					WithField("source", candidate.SourceFilename).
+					With("target", candidate.Target.Filename).
+					With("source", candidate.SourceFilename).
 					Infof("  %s", candidate.Target.Filename)
 				return nil
 			}); err != nil {

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/echocat/goxr/box/packed"
 	"github.com/echocat/goxr/common"
-	"github.com/echocat/goxr/log"
+	"github.com/echocat/slf4g"
 	"github.com/urfave/cli"
 	"regexp"
 	"time"
@@ -41,14 +41,14 @@ func (instance *ListCommand) NewCliCommands() []cli.Command {
 
 func (instance *ListCommand) ExecuteFromCli(*cli.Context) error {
 	return instance.DoWithBox(func(box *packed.Box) error {
-		l := log.WithField("box", instance.Filename)
+		l := log.With("box", instance.Filename)
 		l.
-			WithField("name", box.Name).
-			WithField("description", box.Description).
-			WithField("version", box.Version).
-			WithField("revision", box.Revision).
-			WithField("built", box.Built).
-			WithField("builtBy", box.BuiltBy).
+			With("name", box.Name).
+			With("description", box.Description).
+			With("version", box.Version).
+			With("revision", box.Revision).
+			With("built", box.Built).
+			With("builtBy", box.BuiltBy).
 			Infof("Entries of %s...", instance.Filename)
 
 		return box.ForEach(instance.FilePredicate, func(info common.FileInfo) error {

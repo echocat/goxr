@@ -5,8 +5,8 @@ import (
 	"github.com/echocat/goxr/box/fs"
 	"github.com/echocat/goxr/box/packed"
 	"github.com/echocat/goxr/common"
-	"github.com/echocat/goxr/log"
 	"github.com/echocat/goxr/runtime"
+	"github.com/echocat/slf4g"
 	"io"
 	"path/filepath"
 	sr "runtime"
@@ -16,7 +16,7 @@ import (
 type OnFallbackToFsBoxFunc func(packedBoxCandidateFilename string, bases []string, fsBox Box) error
 
 var (
-	// This variable could easily set while build time using:
+	// AllowFallbackToFsBox could easily set while build time using:
 	// go build -ldflags="-X github.com/echocat/goxr.AllowFallbackToFsBox=false" .
 	// This is useful in case for behave differently for build versions of you application
 	AllowFallbackToFsBox                       = true
@@ -104,21 +104,22 @@ func resolveCallingDir(skipCallerFrames int) string {
 	return result
 }
 
-//noinspection GoSnakeCaseUsage
-func OnFallbackToFsBox_Default(packedBoxCandidateFilename string, bases []string, fsBox Box) error {
+// noinspection GoSnakeCaseUsage
+var OnFallbackToFsBox_Default = func(packedBoxCandidateFilename string, bases []string, fsBox Box) error {
 	if AllowFallbackToFsBox {
 		return OnFallbackToFsBox_Warn(packedBoxCandidateFilename, bases, fsBox)
 	}
 	return OnFallbackToFsBox_Fail(packedBoxCandidateFilename, bases, fsBox)
 }
 
-//noinspection GoSnakeCaseUsage
-func OnFallbackToFsBox_Warn(packedBoxCandidateFilename string, bases []string, fsBox Box) error {
-	log.Warnf("%s does not contain a packed box version. This could happen in development mode", packedBoxCandidateFilename)
+// noinspection GoSnakeCaseUsage
+var OnFallbackToFsBox_Warn = func(packedBoxCandidateFilename string, bases []string, fsBox Box) error {
+	log.With("candidate", packedBoxCandidateFilename).
+		Warn("Candidate does not contain a packed box version. This could happen in development mode.")
 	return nil
 }
 
-//noinspection GoSnakeCaseUsage
-func OnFallbackToFsBox_Fail(packedBoxCandidateFilename string, bases []string, fsBox Box) error {
+// noinspection GoSnakeCaseUsage
+var OnFallbackToFsBox_Fail = func(packedBoxCandidateFilename string, bases []string, fsBox Box) error {
 	return common.NewPathError("openBox", packedBoxCandidateFilename, common.ErrDoesNotContainBox)
 }

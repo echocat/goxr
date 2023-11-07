@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/echocat/goxr"
-	"github.com/echocat/goxr/log"
+	"github.com/echocat/slf4g"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )
@@ -33,11 +33,11 @@ func BodyAllowedForStatus(status int) bool {
 
 func ReportNotHandableProblem(err error, ctx *fasthttp.RequestCtx, logger log.Logger) {
 	logger.
-		WithField("remote", ctx.RemoteAddr().String()).
-		WithField("local", ctx.LocalAddr().String()).
-		WithField("host", string(ctx.Host())).
-		WithField("uri", string(ctx.RequestURI())).
-		WithField("errorType", "notHandable").
+		With("remote", ctx.RemoteAddr().String()).
+		With("local", ctx.LocalAddr().String()).
+		With("host", string(ctx.Host())).
+		With("uri", string(ctx.RequestURI())).
+		With("errorType", "notHandable").
 		WithError(err).
 		Warn()
 }

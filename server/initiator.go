@@ -6,9 +6,9 @@ import (
 	"github.com/echocat/goxr/box/fs"
 	"github.com/echocat/goxr/box/packed"
 	"github.com/echocat/goxr/common"
-	"github.com/echocat/goxr/log"
 	"github.com/echocat/goxr/runtime"
 	"github.com/echocat/goxr/server/configuration"
+	"github.com/echocat/slf4g"
 	"github.com/urfave/cli"
 	"os"
 )
@@ -26,7 +26,7 @@ type Initiator struct {
 func NewInitiatorFor(app *cli.App) *Initiator {
 	result := &Initiator{
 		Server: &Server{
-			Logger: log.NewDefault(),
+			Logger: log.GetLogger("server"),
 		},
 		App: app,
 
@@ -123,7 +123,7 @@ func InitiatorConfigureCliAction(instance *Initiator) error {
 	return nil
 }
 
-//noinspection GoSnakeCaseUsage
+// noinspection GoSnakeCaseUsage
 func default_Initiator_Fail(_ *Initiator, err error) {
 	ie := InitiatorErrorFor(err)
 	common.MustWritef(os.Stderr, "%v\n\n", ie.Cause)

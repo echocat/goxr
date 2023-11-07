@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/echocat/goxr"
 	"github.com/echocat/goxr/common"
-	"github.com/echocat/goxr/log"
 	"github.com/echocat/goxr/server/configuration"
+	"github.com/echocat/slf4g"
 	"github.com/valyala/fasthttp"
 	"mime"
 	"net/http"
@@ -34,10 +34,10 @@ func (instance *Server) Run() error {
 			s.Handler = fasthttp.CompressHandler(s.Handler)
 		}
 		address := instance.Configuration.Listen.GetHttpAddress()
-		instance.Log().Debug(map[string]interface{}{
-			"event":   "httpListenAndServe",
-			"address": address,
-		})
+		instance.Log().
+			With("event", "httpListenAndServe").
+			With("address", address).
+			Debug()
 		return s.ListenAndServe(address)
 	}
 }
@@ -68,7 +68,7 @@ func (instance *Server) Handle(ctx *fasthttp.RequestCtx) {
 				"userAgent":  string(ctx.Request.Header.UserAgent()),
 			}
 			if handled := instance.onAccessLog(boxToUse, ctxToUse, &entry); !handled {
-				instance.Log().Info(entry)
+				instance.Log().WithAll(entry).Info()
 			}
 		}(start)
 	}
@@ -237,7 +237,10 @@ func (instance *Server) ShouldHandleStatusCode(box goxr.Box, code int, ctx *fast
 }
 
 func (instance *Server) Log() log.Logger {
-	return log.OrDefault(instance.Logger)
+	if v := instance.Logger; v != nil {
+		return v
+	}
+	return log.GetRootLogger()
 }
 
 func (instance *Server) configure() error {
@@ -246,11 +249,6 @@ func (instance *Server) configure() error {
 	}
 	if err := instance.configureMimeTypes(); err != nil {
 		return err
-	}
-	if rl, ok := instance.Log().(log.RootLogger); ok {
-		if err := rl.SetConfiguration(instance.Configuration.Logging.Configuration); err != nil {
-			return err
-		}
 	}
 	return nil
 }
