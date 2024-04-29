@@ -7,7 +7,7 @@ require (
 	github.com/edsrzf/mmap-go v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
-	github.com/urfave/cli v1.22.14
+	github.com/urfave/cli v1.22.15
 	github.com/valyala/fasthttp v1.52.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	google.golang.org/appengine v1.6.5 // indirect
