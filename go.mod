@@ -6,7 +6,7 @@ require (
 	github.com/echocat/slf4g/native v1.6.1
 	github.com/edsrzf/mmap-go v1.2.0
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli v1.22.16
 	github.com/valyala/fasthttp v1.57.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
