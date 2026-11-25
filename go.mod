@@ -8,7 +8,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.12.1
 	github.com/urfave/cli v1.22.17
-	github.com/valyala/fasthttp v1.79.0
+	github.com/valyala/fasthttp v1.80.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	gopkg.in/yaml.v2 v2.4.0
 )
